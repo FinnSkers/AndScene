@@ -22,7 +22,7 @@ export default function Login() {
   return (
     <div className="login-page">
       <div className="login-header">
-        <Film className="login-logo-icon" size={36} color="var(--accent-red)" />
+        <Film className="login-logo-icon" size={36} color="var(--accent)" />
         <span className="login-logo-text">AndScene!</span>
       </div>
       
@@ -66,7 +66,7 @@ export default function Login() {
         </form>
 
         <div className="login-footer-text">
-          <p>New to Netflix? <a href="#">Sign up now.</a></p>
+          <p>New to AndScene!? <a href="#">Sign up now.</a></p>
           <p className="login-recaptcha">
             This page is protected by Google reCAPTCHA to ensure you're not a bot. <a href="#">Learn more.</a>
           </p>
