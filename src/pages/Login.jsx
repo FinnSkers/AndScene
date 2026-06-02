@@ -8,14 +8,23 @@ import './Login.css';
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
   const { login } = useApp();
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (email) {
-      login(email);
+    if (!email || !password) return;
+    setError(null);
+    setLoading(true);
+    try {
+      await login(email, password);
       navigate('/profiles');
+    } catch (err) {
+      setError(err.message || 'Authentication failed. Please check your credentials.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -35,6 +44,23 @@ export default function Login() {
         transition={{ duration: 0.5 }}
       >
         <h1 className="login-title">Sign In</h1>
+
+        {error && (
+          <div 
+            className="login-error-message" 
+            style={{ 
+              color: 'var(--red-error)', 
+              fontSize: '0.85rem', 
+              marginBottom: '1.2rem', 
+              background: 'rgba(239, 68, 68, 0.08)', 
+              padding: '10px 14px', 
+              borderRadius: 'var(--radius-sm)', 
+              border: '1px solid rgba(239, 68, 68, 0.2)' 
+            }}
+          >
+            {error}
+          </div>
+        )}
         
         <form onSubmit={handleSubmit} className="login-form">
           <div className="login-input-group">
@@ -55,7 +81,9 @@ export default function Login() {
               required 
             />
           </div>
-          <button type="submit" className="login-submit-btn">Sign In</button>
+          <button type="submit" className="login-submit-btn" disabled={loading}>
+            {loading ? 'Signing In...' : 'Sign In'}
+          </button>
           
           <div className="login-help">
             <label>
