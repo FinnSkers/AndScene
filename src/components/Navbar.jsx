@@ -12,12 +12,16 @@ const NAV_LINKS = [
   { label: 'TV Shows', path: '/browse?type=tv' },
   { label: 'Movies', path: '/browse?type=movies' },
   { label: 'Anime', path: '/anime' },
+  { label: 'Watch Party', path: '/watch-party' },
   { label: 'New & Popular', path: '/browse?type=new' },
   { label: 'My List', path: '/browse?type=mylist' },
+  // Admin link added dynamically
+
 ];
 
 const DROPDOWN_LINKS = [
   { label: 'Manage Profiles', path: '/profiles' },
+  { label: 'TMDB Settings', action: 'tmdb-settings' },
   { label: 'Account', path: '/account' },
   { label: 'Help Center', path: '/help' },
 ];
@@ -57,7 +61,66 @@ export default function Navbar() {
   const dropdownTimeout = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
-  const { setIsSearchOpen, user, logout } = useApp();
+  const { setIsSearchOpen, user, logout, setIsTMDBSettingsOpen, resendVerificationEmail } = useApp();
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [resending, setResending] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const notifRef = useRef(null);
+
+  // Close notifications on outside click
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setNotificationsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, []);
+
+  // Cooldown timer
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timer = setTimeout(() => setResendCooldown((prev) => prev - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCooldown]);
+
+  // Compute notifications list dynamically
+  useEffect(() => {
+    const list = [];
+    if (user && user.emailConfirmed === false) {
+      list.push({
+        id: 'email-verification',
+        type: 'warning',
+        title: 'Verification Required',
+        message: 'Your email address is unverified. Secure your account to back up watchlists and profiles.',
+        hasActions: true
+      });
+    }
+    list.push({
+      id: 'welcome',
+      type: 'info',
+      title: 'Welcome to AndScene!',
+      message: 'Explore movie hubs, create watch parties, and sync continue watching lists.'
+    });
+    list.push({
+      id: 'features',
+      type: 'info',
+      title: 'Site Announcement',
+      message: 'VidKing is now set as the default player. Change servers anytime in the player configurations.'
+    });
+    setNotifications(list);
+  }, [user]);
+
+  const handleResend = async () => {
+    if (!user?.email || resendCooldown > 0) return;
+    setResending(true);
+    await resendVerificationEmail(user.email);
+    setResending(false);
+    setResendCooldown(60);
+  };
 
   // Scroll listener
   useEffect(() => {
@@ -91,7 +154,7 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className={`navbar ${scrolled ? 'scrolled' : 'transparent'}`}>
+      <nav className={`navbar ${scrolled ? 'scrolled' : ''} glass`}>
         {/* Left */}
         <div className="navbar__left">
           <Link to="/" className="navbar__logo">
@@ -124,10 +187,66 @@ export default function Navbar() {
           </button>
 
           {/* Notifications */}
-          <button className="navbar__icon-btn" aria-label="Notifications">
-            <Bell size={20} />
-            <span className="navbar__notif-badge">3</span>
-          </button>
+          <div className="navbar__notif-container" ref={notifRef}>
+            <button 
+              className={`navbar__icon-btn ${notificationsOpen ? 'active' : ''}`} 
+              onClick={() => setNotificationsOpen(!notificationsOpen)}
+              aria-label="Notifications"
+            >
+              <Bell size={20} />
+              {notifications.length > 0 && (
+                <span className="navbar__notif-badge">{notifications.length}</span>
+              )}
+            </button>
+
+            <AnimatePresence>
+              {notificationsOpen && (
+                <motion.div
+                  className="navbar__notif-dropdown dropdown-glass"
+                  variants={dropdownVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                >
+                  <div className="navbar__notif-header">
+                    <h3>Notifications</h3>
+                    {notifications.length > 0 && (
+                      <span className="notif-count">{notifications.length} Unread</span>
+                    )}
+                  </div>
+                  
+                  <div className="navbar__notif-list">
+                    {notifications.length === 0 ? (
+                      <div className="notif-empty">No new notifications</div>
+                    ) : (
+                      notifications.map(notif => (
+                        <div key={notif.id} className={`notif-item ${notif.type}`}>
+                          <div className="notif-item-header">
+                            <span className="notif-item-title">{notif.title}</span>
+                            {notif.type === 'warning' && <span className="notif-badge-warning">Action</span>}
+                            <span className="notif-item-dot"></span>
+                          </div>
+                          <p className="notif-item-message">{notif.message}</p>
+                          
+                          {notif.hasActions && (
+                            <div className="notif-item-actions">
+                              <button 
+                                onClick={handleResend} 
+                                disabled={resending || resendCooldown > 0}
+                                className="btn-notif-action primary"
+                              >
+                                {resending ? 'Sending...' : (resendCooldown > 0 ? `Resend (${resendCooldown}s)` : 'Resend Link')}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
           {/* Profile Dropdown */}
           {user ? (
@@ -157,16 +276,33 @@ export default function Navbar() {
                       <div className="navbar__dropdown-email">{user.email}</div>
                     </div>
 
-                    {DROPDOWN_LINKS.map((item) => (
-                      <Link
-                        key={item.path}
-                        to={item.path}
-                        className="navbar__dropdown-item"
-                        onClick={() => setDropdownOpen(false)}
-                      >
-                        {item.label}
-                      </Link>
-                    ))}
+                    {DROPDOWN_LINKS.map((item) => {
+                      if (item.action === 'tmdb-settings') {
+                        return (
+                          <button
+                            key={item.action}
+                            type="button"
+                            className="navbar__dropdown-item"
+                            onClick={() => {
+                              setDropdownOpen(false);
+                              setIsTMDBSettingsOpen(true);
+                            }}
+                          >
+                            {item.label}
+                          </button>
+                        );
+                      }
+                      return (
+                        <Link
+                          key={item.path}
+                          to={item.path}
+                          className="navbar__dropdown-item"
+                          onClick={() => setDropdownOpen(false)}
+                        >
+                          {item.label}
+                        </Link>
+                      );
+                    })}
 
                     <div className="navbar__dropdown-divider" />
 

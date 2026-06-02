@@ -1,0 +1,240 @@
+.signup-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background-color: var(--bg-primary);
+}
+
+.signup-background {
+  position: absolute;
+  inset: 0;
+  background-image: url('https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=1200&auto=format&fit=crop');
+  background-size: cover;
+  background-position: center;
+  opacity: 0.15;
+  z-index: 0;
+}
+
+.signup-background::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, var(--bg-primary) 0, rgba(10, 10, 18, 0.4) 60%, var(--bg-primary) 100%);
+}
+
+.signup-header {
+  position: relative;
+  z-index: 10;
+  padding: 2rem 4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.signup-logo-text {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  font-weight: 800;
+  background: var(--gradient-accent);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  letter-spacing: -1.5px;
+}
+
+.signup-container {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 450px;
+  margin: auto;
+  padding: var(--space-3xl);
+  border-radius: var(--radius-xl);
+  background: var(--bg-elevated);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: var(--shadow-modal);
+  border: 1px solid var(--border-medium);
+}
+
+.signup-title {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  letter-spacing: -0.5px;
+}
+
+.signup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.signup-input-group input {
+  width: 100%;
+  padding: 1rem;
+  background: var(--bg-glass-medium);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: white;
+  font-size: 1rem;
+  transition: all var(--transition-base);
+}
+
+.signup-input-group input:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--accent);
+  box-shadow: var(--shadow-glow);
+}
+
+/* Password field with eye toggle */
+.signup-input-group.password-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-toggle {
+  position: absolute;
+  right: var(--space-md);
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xs);
+  border-radius: var(--radius-full);
+  transition: color var(--transition-fast);
+}
+
+.password-toggle:hover {
+  color: var(--text-primary);
+}
+
+/* Password Strength Meter */
+.strength-meter-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin-top: -6px;
+}
+
+.strength-meter-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+}
+
+.meter-label {
+  color: var(--text-tertiary);
+}
+
+.strength-value {
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.strength-bars {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  width: 100%;
+  height: 4px;
+}
+
+.strength-bar-node {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: background-color var(--transition-base);
+}
+
+.signup-submit-btn {
+  background: var(--gradient-accent);
+  color: var(--bg-primary);
+  padding: 1rem;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-glow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.signup-submit-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-glow-strong);
+}
+
+.signup-error-message {
+  color: var(--red-error);
+  font-size: 0.85rem;
+  margin-bottom: 1.2rem;
+  background: rgba(239, 68, 68, 0.08);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  line-height: 1.4;
+}
+
+.signup-footer-text {
+  margin-top: 2.5rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.signup-footer-text p {
+  margin-bottom: 1rem;
+}
+
+.signup-footer-text a {
+  color: white;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.signup-footer-text a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.signup-terms {
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+  line-height: 1.4;
+  margin-top: 1.2rem;
+}
+
+/* Success Card details */
+.success-icon-wrap {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-full);
+  background: var(--bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--space-xl);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+@media (max-width: 500px) {
+  .signup-header {
+    padding: 1.5rem;
+  }
+  .signup-container {
+    max-width: calc(100% - 2rem);
+    padding: var(--space-xl);
+  }
+}

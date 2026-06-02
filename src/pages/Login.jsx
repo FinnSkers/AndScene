@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Film } from 'lucide-react';
 import { useApp } from '../context/AppContext';
@@ -94,7 +94,7 @@ export default function Login() {
         </form>
 
         <div className="login-footer-text">
-          <p>New to AndScene!? <a href="#">Sign up now.</a></p>
+          <p>New to AndScene!? <Link to="/signup">Sign up now.</Link></p>
           <p className="login-recaptcha">
             This page is protected by Google reCAPTCHA to ensure you're not a bot. <a href="#">Learn more.</a>
           </p>

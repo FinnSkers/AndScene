@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { fetchTrending } from '../services/tmdb';
+import { fetchTrending, fetchDetails } from '../services/tmdb';
+import { supabase } from '../services/supabaseClient';
 import './Hero.css';
 
 const ROTATE_INTERVAL = 8000;
@@ -38,10 +39,33 @@ export default function Hero() {
   useEffect(() => {
     const loadHero = async () => {
       try {
+        const { data: configData, error: configError } = await supabase
+          .from('watch_parties')
+          .select('*')
+          .eq('room_code', 'SYSTEM_HERO_MEDIA')
+          .single();
+
+        if (!configError && configData && configData.room_name) {
+          const [mediaType, mediaId] = configData.room_name.split(':');
+          if (mediaId && mediaType) {
+            const detailItem = await fetchDetails(mediaId, mediaType);
+            if (detailItem) {
+              setFeatured([detailItem]);
+              return;
+            }
+          }
+        }
+
         const data = await fetchTrending();
-        setFeatured(data.slice(0, 5)); // Use top 5 trending for hero
+        setFeatured(data.slice(0, 5));
       } catch (err) {
         console.error('Failed to load hero data', err);
+        try {
+          const data = await fetchTrending();
+          setFeatured(data.slice(0, 5));
+        } catch {
+          // Final fallback catch
+        }
       }
     };
     loadHero();

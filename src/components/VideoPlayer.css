@@ -1,7 +1,6 @@
 .video-player-container {
   width: 100%;
-  display: flex;
-  flex-direction: column;
+  position: relative;
   background: #000;
   border-radius: var(--radius-lg);
   overflow: hidden;
@@ -25,118 +24,98 @@
   border: none;
 }
 
-.video-controls-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--space-md) var(--space-lg);
-  background: var(--bg-secondary);
-  border-top: 1px solid var(--border-subtle);
+/* Centered Floating Overlay Controls */
+.video-controls-overlay {
+  position: absolute;
+  top: var(--space-md);
+  left: 50%;
+  transform: translate(-50%, -8px);
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
 }
 
-.controls-left {
+.video-controls-overlay.visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  pointer-events: auto;
+}
+
+.server-floating-bar {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
+  padding: 6px 14px;
+  background: var(--bg-glass-medium) !important;
+  backdrop-filter: blur(25px) saturate(1.2);
+  -webkit-backdrop-filter: blur(25px) saturate(1.2);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
 }
 
-.source-indicator {
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
-}
-
-.source-indicator strong {
-  color: var(--text-primary);
-  font-weight: 600;
-}
-
-.source-selector {
-  position: relative;
-}
-
-.source-btn {
-  padding: 8px 16px;
-  font-size: var(--text-sm);
-  gap: 8px;
-}
-
-.source-dropdown {
-  position: absolute;
-  bottom: calc(100% + 8px);
-  right: 0;
-  width: 250px;
-  border-radius: var(--radius-md);
-  padding: var(--space-xs) 0;
-  z-index: var(--z-dropdown);
-  box-shadow: var(--shadow-modal);
-  border: 1px solid var(--border-medium);
-  background: var(--bg-elevated);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-}
-
-.dropdown-header {
-  padding: var(--space-sm) var(--space-md);
-  font-size: var(--text-xs);
+.server-bar-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
   color: var(--text-tertiary);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  border-bottom: 1px solid var(--border-subtle);
-  margin-bottom: 4px;
+  font-weight: 700;
+  margin-right: 4px;
 }
 
-.source-option {
-  width: 100%;
-  text-align: left;
-  padding: 10px var(--space-md);
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
+.server-pills {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  gap: 6px;
+}
+
+.server-pill-btn {
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-radius: var(--radius-full);
+  border: 1px solid transparent;
+  background: none;
+  cursor: pointer;
   transition: all var(--transition-base);
 }
 
-.source-option:hover {
-  background: var(--bg-glass-light);
+.server-pill-btn:hover {
   color: var(--text-primary);
+  background: var(--bg-glass-light);
 }
 
-.source-option.active {
+.server-pill-btn.active {
   color: var(--accent);
-  font-weight: 600;
+  border-color: rgba(245, 166, 35, 0.3);
   background: rgba(245, 166, 35, 0.08);
-}
-
-.active-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: var(--radius-full);
-  background: var(--accent);
-  box-shadow: var(--shadow-glow);
+  box-shadow: 0 0 10px rgba(245, 166, 35, 0.1);
+  font-weight: 700;
 }
 
 @media (max-width: 768px) {
-  .video-controls-bar {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-md);
-    padding: var(--space-md);
+  .video-controls-overlay {
+    top: var(--space-xs);
+    width: 95%;
   }
   
-  .controls-right {
+  .server-floating-bar {
     width: 100%;
+    padding: 6px 10px;
+    gap: var(--space-xs);
+    overflow-x: auto;
+    justify-content: center;
   }
   
-  .source-selector, .source-btn {
-    width: 100%;
+  .server-bar-label {
+    display: none; /* Hide label on small mobile screens to save space */
   }
   
-  .source-dropdown {
-    right: 0;
-    left: 0;
-    width: 100%;
+  .server-pill-btn {
+    padding: 4px 8px;
+    font-size: 10px;
   }
 }
 

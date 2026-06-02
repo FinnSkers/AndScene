@@ -35,3 +35,80 @@
   color: var(--text-primary);
 }
 
+/* ── Announcement Banner ── */
+.home-announcement-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 48px;
+  z-index: calc(var(--z-navbar) + 10);
+  background: linear-gradient(90deg, rgba(245, 166, 35, 0.18) 0%, rgba(139, 92, 246, 0.18) 100%);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-bottom: 1px solid var(--border-accent);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--content-padding);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4), 0 0 15px var(--accent-glow);
+}
+
+.banner-content {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.banner-icon {
+  color: var(--accent);
+  filter: drop-shadow(0 0 8px var(--accent-glow));
+  flex-shrink: 0;
+}
+
+.banner-text {
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.banner-close {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xs);
+  border-radius: var(--radius-full);
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+  margin-left: var(--space-md);
+}
+
+.banner-close:hover {
+  color: var(--text-primary);
+  background: var(--bg-glass-light);
+  transform: scale(1.1);
+}
+
+/* Adjust Navbar Top position dynamically if banner exists */
+.home-page:has(.home-announcement-banner) .navbar {
+  top: 60px; /* 12px default top + 48px banner height */
+}
+
+@media (max-width: 992px) {
+  .home-page:has(.home-announcement-banner) .navbar {
+    top: 48px; /* Stick directly below banner on mobile/tablet */
+  }
+}
+
+

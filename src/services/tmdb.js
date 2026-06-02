@@ -5,9 +5,19 @@ const BASE_URL = import.meta.env.VITE_TMDB_BASE_URL || 'https://api.themoviedb.o
 
 const tmdb = axios.create({
   baseURL: BASE_URL,
-  params: {
-    api_key: API_KEY,
-  },
+  params: {},
+});
+
+// Dynamic interceptor to swap global shared key with custom personal key
+tmdb.interceptors.request.use((config) => {
+  const customKey = localStorage.getItem('user_tmdb_api_key');
+  config.params = {
+    ...config.params,
+    api_key: customKey ? customKey.trim() : API_KEY
+  };
+  return config;
+}, (error) => {
+  return Promise.reject(error);
 });
 
 export const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/';

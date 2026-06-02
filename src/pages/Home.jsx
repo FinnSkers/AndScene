@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../context/AppContext';
 import { fetchTrending, fetchMovies, fetchSeries, discoverMovies, fetchAnime } from '../services/tmdb';
+import { supabase } from '../services/supabaseClient';
+import { Megaphone, X } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Hero from '../components/Hero';
 import ContentRow from '../components/ContentRow';
@@ -13,10 +15,41 @@ import { HeroSkeleton, RowSkeleton } from '../components/Skeleton';
 import './Home.css';
 
 export default function Home() {
-  const { myList, continueWatching, toast } = useApp();
+  const { myList, continueWatching, toast, setIsTMDBSettingsOpen } = useApp();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showSplash, setShowSplash] = useState(true);
+  const [announcement, setAnnouncement] = useState('');
+  const [showApiPrompt, setShowApiPrompt] = useState(
+    !localStorage.getItem('user_tmdb_api_key') && 
+    sessionStorage.getItem('api_prompt_dismissed') !== 'true'
+  );
+
+  useEffect(() => {
+    const fetchAnnouncement = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('watch_parties')
+          .select('room_name')
+          .eq('room_code', 'SYSTEM_ANNOUNCEMENT')
+          .single();
+        if (!error && data?.room_name) {
+          const dismissed = sessionStorage.getItem('announcement_dismissed');
+          if (dismissed !== data.room_name) {
+            setAnnouncement(data.room_name);
+          }
+        }
+      } catch {
+        // Safe fallback if not set or database unavailable
+      }
+    };
+    fetchAnnouncement();
+  }, []);
+
+  const handleDismissAnnouncement = () => {
+    sessionStorage.setItem('announcement_dismissed', announcement);
+    setAnnouncement('');
+  };
 
   useEffect(() => {
     const loadData = async () => {
@@ -59,6 +92,26 @@ export default function Home() {
       <AnimatePresence>
         {showSplash && <Splash key="splash" onComplete={() => setShowSplash(false)} />}
       </AnimatePresence>
+
+      <AnimatePresence>
+        {announcement && (
+          <motion.div 
+            className="home-announcement-banner"
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            transition={{ duration: 0.4, ease: 'easeOut' }}
+          >
+            <div className="banner-content">
+              <Megaphone size={16} className="banner-icon" />
+              <span className="banner-text">{announcement}</span>
+            </div>
+            <button className="banner-close" onClick={handleDismissAnnouncement} aria-label="Dismiss Announcement">
+              <X size={16} />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
       
       <Navbar />
       <AnimatePresence mode="wait">
@@ -86,6 +139,50 @@ export default function Home() {
           >
             <Hero />
             <div className="home-rows" style={{ minHeight: '50vh', marginTop: 0 }}>
+              {showApiPrompt && (
+                <div className="api-prompt-card glass animate-fade-in" style={{
+                  margin: '24px var(--content-padding) 0',
+                  padding: '16px 24px',
+                  borderRadius: 'var(--radius-md)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 'var(--space-md)',
+                  border: '1px solid var(--border-accent)',
+                  background: 'rgba(245, 166, 35, 0.04)',
+                  boxShadow: '0 0 15px rgba(245, 166, 35, 0.05)',
+                  position: 'relative',
+                  zIndex: 2
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{ fontSize: '1.25rem' }}>💡</span>
+                    <div>
+                      <h4 style={{ fontSize: 'var(--text-sm)', fontWeight: '600', color: 'var(--text-primary)', margin: 0 }}>Shared Free Indexing Active</h4>
+                      <p style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px', lineScale: 1.4 }}>You are currently using the shared global TMDB connection. Experience rate limits? Click below to connect your own free TMDB API key.</p>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '12px', flexShrink: 0 }}>
+                    <button 
+                      className="btn btn-primary" 
+                      style={{ padding: '6px 12px', fontSize: '10px', background: 'var(--gradient-accent)' }}
+                      onClick={() => setIsTMDBSettingsOpen(true)}
+                    >
+                      Connect Personal Key
+                    </button>
+                    <button 
+                      className="btn btn-secondary" 
+                      style={{ padding: '6px 10px', fontSize: '10px' }}
+                      onClick={() => {
+                        sessionStorage.setItem('api_prompt_dismissed', 'true');
+                        setShowApiPrompt(false);
+                      }}
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {rows.map((row) => (
                 <ContentRow
                   key={row.id}

@@ -8,6 +8,11 @@ const SOCIAL_LINKS = [
   { Icon: Tv, label: 'YouTube', href: '#' },
 ];
 
+const QUICK_LINKS = [
+  { heading: 'Company', items: ['About', 'Careers', 'Contact'] },
+  { heading: 'Legal', items: ['Terms of Use', 'Privacy', 'Cookie Preferences'] },
+];
+
 const FOOTER_LINKS = [
   'Audio Description',
   'Help Center',
@@ -15,20 +20,14 @@ const FOOTER_LINKS = [
   'Media Center',
   'Investor Relations',
   'Jobs',
-  'Terms of Use',
-  'Privacy',
-  'Legal Notices',
-  'Cookie Preferences',
-  'Corporate Information',
-  'Contact Us',
 ];
 
 export default function Footer() {
   return (
-    <footer className="footer">
-      <div className="footer__inner">
+    <footer className="footer glass modern-glass">
+      <div className="container footer__content">
         {/* Social Icons */}
-        <div className="footer__social">
+        <div className="footer__section footer__social">
           {SOCIAL_LINKS.map(({ Icon, label, href }) => (
             <a
               key={label}
@@ -43,8 +42,20 @@ export default function Footer() {
           ))}
         </div>
 
-        {/* Link Grid */}
-        <div className="footer__links">
+        {/* Quick Links */}
+        {QUICK_LINKS.map(({ heading, items }) => (
+          <div key={heading} className="footer__section footer__quick">
+            <h4 className="footer__heading">{heading}</h4>
+            {items.map((text) => (
+              <a key={text} href="#" className="footer__link">
+                {text}
+              </a>
+            ))}
+          </div>
+        ))}
+
+        {/* Additional Links */}
+        <div className="footer__section footer__links">
           {FOOTER_LINKS.map((text) => (
             <a key={text} href="#" className="footer__link">
               {text}
@@ -52,12 +63,14 @@ export default function Footer() {
           ))}
         </div>
 
-        {/* Service Code */}
-        <button className="footer__service-btn">Service Code</button>
-
-        {/* Copyright */}
-        <p className="footer__copy">&copy; 2026 AndScene!. A Futuristic Streaming Project.</p>
+        {/* Newsletter Subscription */}
+        <div className="footer__section footer__subscribe">
+          <h4 className="footer__heading">Stay Updated</h4>
+          <input type="email" placeholder="Enter your email" className="footer__input" />
+          <button className="footer__btn">Subscribe</button>
+        </div>
       </div>
+      <p className="footer__copy">© 2026 AndScene! – All rights reserved.</p>
     </footer>
   );
 }

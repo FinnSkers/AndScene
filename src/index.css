@@ -457,3 +457,8 @@ input, select, textarea {
     --content-padding: 16px;
   }
 }
+
+/* ===== Utility Classes ===== */
+.bordered { border: var(--border-width, 1px) solid var(--border-color, var(--border-subtle)); border-radius: var(--border-radius, var(--radius-md)); }
+.container { max-width: 1200px; margin: 0 auto; padding: 0 var(--space-md); }
+@media (max-width: 1024px) { .container { padding: 0 var(--space-sm); } }
