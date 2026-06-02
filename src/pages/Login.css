@@ -1,0 +1,169 @@
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background-color: var(--bg-primary);
+}
+
+.login-background {
+  position: absolute;
+  inset: 0;
+  background-image: url('https://assets.nflxext.com/ffe/siteui/vlv3/ab180a27-b661-44d7-a6d9-940cb32f2f4a/7fb62e44-31fd-4e1c-bba3-11738bb64ce4/US-en-20231009-popsignuptwoweeks-perspective_alpha_website_large.jpg');
+  background-size: cover;
+  background-position: center;
+  opacity: 0.15;
+  z-index: 0;
+}
+
+.login-background::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, var(--bg-primary) 0, rgba(10, 10, 18, 0.4) 60%, var(--bg-primary) 100%);
+}
+
+.login-header {
+  position: relative;
+  z-index: 10;
+  padding: 2rem 4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.login-logo-text {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  font-weight: 800;
+  background: var(--gradient-accent);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  letter-spacing: -1.5px;
+}
+
+.login-container {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 450px;
+  margin: auto;
+  padding: var(--space-3xl);
+  border-radius: var(--radius-xl);
+  background: var(--bg-elevated);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: var(--shadow-modal);
+  border: 1px solid var(--border-medium);
+}
+
+.login-title {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  letter-spacing: -0.5px;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.login-input-group input {
+  width: 100%;
+  padding: 1rem;
+  background: var(--bg-glass-medium);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: white;
+  font-size: 1rem;
+  transition: all var(--transition-base);
+}
+
+.login-input-group input:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--accent);
+  box-shadow: var(--shadow-glow);
+}
+
+.login-submit-btn {
+  background: var(--gradient-accent);
+  color: var(--bg-primary);
+  padding: 1rem;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-glow);
+}
+
+.login-submit-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-glow-strong);
+}
+
+.login-help {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+}
+
+.login-help a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color var(--transition-base);
+}
+
+.login-help a:hover {
+  color: var(--accent);
+}
+
+.login-footer-text {
+  margin-top: 3rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.login-footer-text p {
+  margin-bottom: 1rem;
+}
+
+.login-footer-text a {
+  color: white;
+  text-decoration: none;
+}
+
+.login-footer-text a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.login-recaptcha {
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+}
+
+.login-recaptcha a {
+  color: var(--blue-info);
+}
+
+@media (max-width: 500px) {
+  .login-header {
+    padding: 1.5rem;
+  }
+  .login-container {
+    max-width: calc(100% - 2rem);
+    padding: var(--space-xl);
+  }
+}
+

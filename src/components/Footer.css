@@ -1,0 +1,100 @@
+/* ===== Footer ===== */
+.footer {
+  width: 100%;
+  background-color: var(--bg-primary);
+  padding: var(--space-3xl) var(--content-padding) var(--space-xl);
+  margin-top: var(--space-4xl);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.footer__inner {
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+/* ===== Social Icons ===== */
+.footer__social {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  margin-bottom: var(--space-xl);
+}
+
+.footer__social-link {
+  color: var(--text-secondary);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-base);
+}
+
+.footer__social-link:hover {
+  color: var(--accent);
+  transform: scale(1.1);
+}
+
+/* ===== Link Grid ===== */
+.footer__links {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xl);
+}
+
+.footer__link {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: var(--text-xs);
+  padding: var(--space-xs) 0;
+  transition: all var(--transition-base);
+}
+
+.footer__link:hover {
+  color: var(--accent);
+}
+
+/* ===== Service Code Button ===== */
+.footer__service-btn {
+  display: inline-block;
+  padding: 6px var(--space-md);
+  border: 1px solid var(--border-medium);
+  background: var(--bg-glass-light);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-lg);
+  transition: all var(--transition-base);
+}
+
+.footer__service-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--bg-glass-medium);
+}
+
+/* ===== Copyright ===== */
+.footer__copy {
+  color: var(--text-tertiary);
+  font-size: var(--text-xs);
+  margin: 0;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 1024px) {
+  .footer__links {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .footer__links {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .footer__social {
+    gap: var(--space-md);
+  }
+}
+

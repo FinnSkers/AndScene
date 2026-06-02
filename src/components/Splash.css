@@ -1,0 +1,39 @@
+.splash-container {
+  position: fixed;
+  inset: 0;
+  background-color: var(--bg-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-toast);
+}
+
+.splash-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.splash-text {
+  font-family: var(--font-display);
+  font-size: clamp(3.5rem, 10vw, 7rem);
+  font-weight: 800;
+  letter-spacing: -2px;
+  background: var(--gradient-accent);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 4px 12px rgba(245, 166, 35, 0.15));
+  animation: pulse-glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes pulse-glow {
+  0% {
+    filter: drop-shadow(0 4px 12px rgba(245, 166, 35, 0.15)) drop-shadow(0 0 8px rgba(245, 166, 35, 0.1));
+  }
+  100% {
+    filter: drop-shadow(0 4px 20px rgba(245, 166, 35, 0.3)) drop-shadow(0 0 20px rgba(245, 166, 35, 0.2));
+    transform: scale(1.02);
+  }
+}
+

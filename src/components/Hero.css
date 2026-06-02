@@ -1,0 +1,181 @@
+/* ===== Hero Section ===== */
+.hero {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  background-color: var(--bg-primary);
+}
+
+/* ===== Background Image ===== */
+.hero__backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.hero__backdrop-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  opacity: 0.85;
+}
+
+/* Ken Burns — slow zoom animation */
+@keyframes kenBurns {
+  0% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1.1);
+  }
+}
+
+.hero__backdrop-img.ken-burns {
+  animation: kenBurns 20s cubic-bezier(0.25, 0.46, 0.45, 0.94) alternate infinite;
+  will-change: transform;
+}
+
+/* ===== Gradient Overlays ===== */
+.hero__gradient-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 70%;
+  background: linear-gradient(0deg, var(--bg-primary) 0%, rgba(10, 10, 18, 0.8) 30%, transparent 100%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.hero__gradient-left {
+  position: absolute;
+  inset: 0;
+  background: var(--gradient-hero-left);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* ===== Content ===== */
+.hero__content {
+  position: relative;
+  z-index: 2;
+  padding: 0 var(--content-padding);
+  padding-bottom: var(--space-4xl);
+  max-width: 800px;
+  width: 100%;
+}
+
+.hero__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+  flex-wrap: wrap;
+}
+
+.hero__title {
+  font-family: var(--font-display);
+  font-size: var(--text-hero);
+  color: var(--text-primary);
+  line-height: 1.05;
+  margin: 0 0 var(--space-lg) 0;
+  letter-spacing: -2px;
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+  font-weight: 800;
+}
+
+.hero__description {
+  color: var(--text-secondary);
+  font-size: var(--text-base);
+  font-weight: 400;
+  line-height: 1.6;
+  margin: 0 0 var(--space-xl) 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 90%;
+}
+
+/* ===== CTA Buttons ===== */
+.hero__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+/* ===== Indicator Dots ===== */
+.hero__indicators {
+  position: absolute;
+  bottom: var(--space-2xl);
+  right: var(--content-padding);
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.hero__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  border: none;
+  background-color: rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  padding: 0;
+  transition: all var(--transition-base);
+}
+
+.hero__dot:hover {
+  background-color: rgba(255, 255, 255, 0.5);
+  transform: scale(1.2);
+}
+
+.hero__dot.active {
+  background-color: var(--accent);
+  width: 24px;
+  box-shadow: var(--shadow-glow);
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+  .hero {
+    height: 100vh;
+  }
+
+  .hero__content {
+    padding-bottom: var(--space-3xl);
+    max-width: 100%;
+  }
+
+  .hero__title {
+    font-size: clamp(2.2rem, 10vw, var(--text-hero));
+    letter-spacing: -1px;
+  }
+
+  .hero__description {
+    font-size: var(--text-sm);
+    -webkit-line-clamp: 2;
+  }
+
+  .hero__indicators {
+    bottom: var(--space-xl);
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+  }
+
+  .hero__dot {
+    width: 6px;
+    height: 6px;
+  }
+  .hero__dot.active {
+    width: 18px;
+  }
+}
+
