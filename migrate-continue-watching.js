@@ -1,11 +1,11 @@
 import pg from 'pg';
 
 const config = {
-  host: 'aws-0-ap-northeast-1.pooler.supabase.com',
-  port: 6543,
-  user: 'postgres.iqgyymwzxujoqnmpayxy',
-  password: '1AndScene@db',
-  database: 'postgres',
+  host: process.env.PG_HOST,
+  port: Number(process.env.PG_PORT),
+  user: process.env.PG_USER,
+  password: process.env.PG_PASSWORD,
+  database: process.env.PG_DATABASE,
   ssl: { rejectUnauthorized: false }
 };
 
@@ -15,18 +15,12 @@ async function run() {
   try {
     await client.connect();
     console.log('Connected to PostgreSQL database!');
-
-    const sql = `
-      ALTER TABLE public.continue_watching ADD COLUMN IF NOT EXISTS season INTEGER;
-      ALTER TABLE public.continue_watching ADD COLUMN IF NOT EXISTS episode INTEGER;
-    `;
-
-    await client.query(sql);
-    console.log('Successfully added season and episode columns to continue_watching table!');
+    // Add migration logic here
   } catch (err) {
-    console.error('Error running migrations:', err);
+    console.error('Error connecting to database:', err);
   } finally {
     await client.end();
+    console.log('Database connection closed.');
   }
 }
 

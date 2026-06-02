@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Film, Eye, EyeOff, Mail } from 'lucide-react';
+import { Film, Eye, EyeOff, Mail, Loader2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import './Signup.css';
 
@@ -17,6 +17,19 @@ export default function Signup() {
   // Signup progress states
   const [signupSuccess, setSignupSuccess] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState({ score: 0, text: 'Very Weak', color: '#ef4444' });
+
+  // Cooldown for email rate limit
+  const [cooldown, setCooldown] = useState(0);
+  // Start cooldown when rate limit error occurs
+  useEffect(() => {
+    if (error && error.toLowerCase().includes('rate limit')) {
+      setCooldown(60);
+      const timer = setInterval(() => {
+        setCooldown(prev => (prev > 0 ? prev - 1 : 0));
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [error]);
 
   const { signup, loginSandbox } = useApp();
   const navigate = useNavigate();
@@ -100,6 +113,14 @@ export default function Signup() {
     }
   };
 
+  useEffect(() => {
+    if (signupSuccess) {
+      const timer = setTimeout(() => {
+        navigate('/profiles');
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [signupSuccess, navigate]);
   return (
     <div className="signup-page">
       {/* Top logo header */}
@@ -192,9 +213,15 @@ export default function Signup() {
                 />
               </div>
 
-              <button type="submit" className="signup-submit-btn" disabled={loading}>
-                {loading ? 'Creating Account...' : 'Get Started'}
-              </button>
+  // cooldown logic moved above
+
+  // Modified Get Started button with cooldown
+  // Original line 195-197 replaced below
+
+                  <button type="submit" className="signup-submit-btn" disabled={loading || cooldown > 0}>
+                    {loading ? <Loader2 size={16} className="spinner" style={{ marginRight: '8px', verticalAlign: 'middle' }} /> : null}
+                    {loading ? 'Creating Account...' : cooldown > 0 ? `Wait (${cooldown}s)` : 'Get Started'}
+                  </button>
             </form>
 
             <div className="signup-footer-text">
