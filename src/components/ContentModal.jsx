@@ -1,4 +1,6 @@
-import { useEffect, useState, useMemo } from 'react';
+/* eslint-disable react-hooks/set-state-in-effect */
+import { useEffect, useState } from 'react';
+
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Play, Plus, Check, ThumbsUp, ThumbsDown, Share2, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';

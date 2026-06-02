@@ -111,7 +111,7 @@ export const fetchTrailer = async (id, type) => {
     const { data } = await tmdb.get(`/${tmdbType}/${id}/videos`);
     const trailer = data.results.find(v => v.type === 'Trailer' && v.site === 'YouTube');
     return trailer ? trailer.key : null;
-  } catch (err) {
+  } catch {
     return null;
   }
 };

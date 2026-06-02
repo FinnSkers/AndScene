@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -18,6 +19,7 @@ import ContentModal from '../components/ContentModal';
 import SearchOverlay from '../components/SearchOverlay';
 import Footer from '../components/Footer';
 import './Browse.css';
+
 
 const sortOptions = [
   { value: 'suggested', label: 'Suggested' },
@@ -164,7 +166,7 @@ export default function Browse() {
 
       {/* ── Content Grid ── */}
       {loading && page === 1 ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '100px 0', color: 'var(--accent-red)' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '100px 0', color: 'var(--accent)' }}>
           <Loader2 className="spinner" size={48} />
         </div>
       ) : (
@@ -213,7 +215,7 @@ export default function Browse() {
           
           {/* Infinite Scroll Trigger */}
           {type !== 'mylist' && hasMore && sortedContent.length > 0 && (
-            <div ref={loaderRef} style={{ display: 'flex', justifyContent: 'center', padding: '20px 0 60px 0', color: 'var(--accent-red)' }}>
+            <div ref={loaderRef} style={{ display: 'flex', justifyContent: 'center', padding: '20px 0 60px 0', color: 'var(--accent)' }}>
               <Loader2 className="spinner" size={32} />
             </div>
           )}

@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useApp } from '../context/AppContext';
-import { discoverSeries, fetchTrending, getTvGenres } from '../services/tmdb';
+import { discoverSeries } from '../services/tmdb';
 import Navbar from '../components/Navbar';
 import ContentRow from '../components/ContentRow';
 import ContentModal from '../components/ContentModal';
@@ -10,7 +8,6 @@ import Footer from '../components/Footer';
 import { Loader2 } from 'lucide-react';
 
 export default function Anime() {
-  const { openModal } = useApp();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
 

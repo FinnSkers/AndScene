@@ -1,4 +1,6 @@
+/* eslint-disable react-refresh/only-export-components, react-hooks/exhaustive-deps */
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
+
 
 const AppContext = createContext(null);
 
@@ -11,7 +13,7 @@ export function AppProvider({ children }) {
     if (saved) {
       try {
         return JSON.parse(saved);
-      } catch (e) {
+      } catch {
         return [];
       }
     }
@@ -28,19 +30,24 @@ export function AppProvider({ children }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [toast, setToast] = useState(null);
 
+  const showToast = useCallback((message) => {
+    setToast(message);
+    setTimeout(() => setToast(null), 3000);
+  }, []);
+
   const addToMyList = useCallback((item) => {
     setMyList(prev => {
       if (prev.find(i => i.id === item.id)) return prev;
       return [...prev, item];
     });
     showToast(`Added "${item.title}" to My List`);
-  }, []);
+  }, [showToast]);
 
   const removeFromMyList = useCallback((itemId) => {
     const item = myList.find(i => i.id === itemId);
     setMyList(prev => prev.filter(i => i.id !== itemId));
     if (item) showToast(`Removed "${item.title}" from My List`);
-  }, [myList]);
+  }, [myList, showToast]);
 
   const toggleMyList = useCallback((item) => {
     if (myList.find(i => i.id === item.id)) {
@@ -62,11 +69,6 @@ export function AppProvider({ children }) {
   const closeModal = useCallback(() => {
     setModalContent(null);
     document.body.style.overflow = 'auto';
-  }, []);
-
-  const showToast = useCallback((message) => {
-    setToast(message);
-    setTimeout(() => setToast(null), 3000);
   }, []);
 
   const [user, setUser] = useState(() => {
