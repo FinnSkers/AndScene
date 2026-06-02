@@ -27,6 +27,11 @@ const SOURCES = [
     name: 'SuperEmbed',
     getMovieUrl: (id) => `https://multiembed.mov/?video_id=${id}&tmdb=1`,
     getTvUrl: (id, s, e) => `https://multiembed.mov/?video_id=${id}&tmdb=1&s=${s}&e=${e}`,
+  },
+  {
+    name: 'VidKing',
+    getMovieUrl: (id) => `https://vidking.net/embed/movie/${id}`,
+    getTvUrl: (id, s, e) => `https://vidking.net/embed/tv/${id}/${s}/${e}`,
   }
 ];
 
