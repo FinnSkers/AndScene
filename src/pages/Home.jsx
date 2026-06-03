@@ -29,14 +29,14 @@ export default function Home() {
     const fetchAnnouncement = async () => {
       try {
         const { data, error } = await supabase
-          .from('watch_parties')
-          .select('room_name')
-          .eq('room_code', 'SYSTEM_ANNOUNCEMENT')
+          .from('system_config')
+          .select('value')
+          .eq('key', 'SYSTEM_ANNOUNCEMENT')
           .single();
-        if (!error && data?.room_name) {
+        if (!error && data?.value) {
           const dismissed = sessionStorage.getItem('announcement_dismissed');
-          if (dismissed !== data.room_name) {
-            setAnnouncement(data.room_name);
+          if (dismissed !== data.value) {
+            setAnnouncement(data.value);
           }
         }
       } catch {

@@ -302,9 +302,12 @@ export default function Watch() {
         sender: senderName
       }
     });
+  };
 
-    setSyncMin('');
-    setSyncSec('');
+  const handleSliderChange = (e) => {
+    const totalSecs = parseInt(e.target.value) || 0;
+    setSyncMin(Math.floor(totalSecs / 60).toString());
+    setSyncSec((totalSecs % 60).toString());
   };
 
   const copyInviteLink = () => {
@@ -533,26 +536,75 @@ export default function Watch() {
                   ) : (
                     <div className="playback-sync-tool glass">
                       <span className="tool-title">Sync playback time for all:</span>
-                      <form onSubmit={handleSyncPlayback} className="sync-form">
-                        <input 
-                          type="number" 
-                          placeholder="Min" 
-                          min="0"
-                          value={syncMin}
-                          onChange={(e) => setSyncMin(e.target.value)}
-                          required
-                        />
-                        <span className="colon">:</span>
-                        <input 
-                          type="number" 
-                          placeholder="Sec" 
-                          min="0"
-                          max="59"
-                          value={syncSec}
-                          onChange={(e) => setSyncSec(e.target.value)}
-                          required
-                        />
-                        <button type="submit" className="btn btn-primary sync-btn">Sync</button>
+                      <form onSubmit={handleSyncPlayback} className="sync-form" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <div className="sync-slider-wrapper" style={{ width: '100%' }}>
+                          <input 
+                            type="range" 
+                            min="0" 
+                            max="7200" 
+                            value={(parseInt(syncMin) || 0) * 60 + (parseInt(syncSec) || 0)} 
+                            onChange={handleSliderChange}
+                            className="sync-slider"
+                            style={{ width: '100%', accentColor: 'var(--accent)', cursor: 'pointer' }}
+                          />
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                            <span>0:00</span>
+                            <span style={{ color: 'var(--accent)', fontWeight: 'bold' }}>
+                              {Math.floor(((parseInt(syncMin) || 0) * 60 + (parseInt(syncSec) || 0)) / 60)}:
+                              {(((parseInt(syncMin) || 0) * 60 + (parseInt(syncSec) || 0)) % 60).toString().padStart(2, '0')}
+                            </span>
+                            <span>2:00:00</span>
+                          </div>
+                        </div>
+                        <div className="sync-inputs" style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                          <input 
+                            type="number" 
+                            placeholder="Min" 
+                            min="0"
+                            value={syncMin}
+                            onChange={(e) => setSyncMin(e.target.value)}
+                            required
+                            style={{ flex: 1, padding: '6px 8px', background: 'var(--bg-glass-medium)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)', color: 'white', textAlign: 'center' }}
+                          />
+                          <span className="colon" style={{ color: 'var(--text-secondary)' }}>:</span>
+                          <input 
+                            type="number" 
+                            placeholder="Sec" 
+                            min="0"
+                            max="59"
+                            value={syncSec}
+                            onChange={(e) => setSyncSec(e.target.value)}
+                            required
+                            style={{ flex: 1, padding: '6px 8px', background: 'var(--bg-glass-medium)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)', color: 'white', textAlign: 'center' }}
+                          />
+                          <button type="submit" className="btn btn-primary sync-btn" style={{ padding: '8px 16px', borderRadius: 'var(--radius-sm)' }}>Sync</button>
+                        </div>
+                        <div className="sync-tweaks" style={{ display: 'flex', gap: '8px', width: '100%' }}>
+                          <button
+                            type="button"
+                            className="btn btn-secondary"
+                            style={{ flex: 1, padding: '6px', fontSize: '11px', borderRadius: 'var(--radius-sm)' }}
+                            onClick={() => {
+                              const totalSecs = Math.max(0, ((parseInt(syncMin) || 0) * 60 + (parseInt(syncSec) || 0)) - 30);
+                              setSyncMin(Math.floor(totalSecs / 60).toString());
+                              setSyncSec((totalSecs % 60).toString());
+                            }}
+                          >
+                            -30s
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-secondary"
+                            style={{ flex: 1, padding: '6px', fontSize: '11px', borderRadius: 'var(--radius-sm)' }}
+                            onClick={() => {
+                              const totalSecs = Math.max(0, ((parseInt(syncMin) || 0) * 60 + (parseInt(syncSec) || 0)) + 30);
+                              setSyncMin(Math.floor(totalSecs / 60).toString());
+                              setSyncSec((totalSecs % 60).toString());
+                            }}
+                          >
+                            +30s
+                          </button>
+                        </div>
                       </form>
                     </div>
                   )}

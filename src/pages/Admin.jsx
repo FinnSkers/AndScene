@@ -7,6 +7,9 @@ import Footer from '../components/Footer';
 import './Admin.css';
 
 export default function Admin() {
+  const adminEmail = import.meta.env.VITE_ADMIN_2FA_EMAIL || 'shajidul.32@gmail.com';
+  const adminPasscode = import.meta.env.VITE_ADMIN_PASSCODE || 'andscene-admin';
+
   const [password, setPassword] = useState('');
   const [step, setStep] = useState(1); // 1 = Passcode, 2 = Email 2FA, 3 = Dashboard
   const [isUnlocked, setIsUnlocked] = useState(false);
@@ -71,7 +74,7 @@ export default function Admin() {
   // 1. Password Verification
   const handleUnlock = (e) => {
     e.preventDefault();
-    if (password.trim() === 'andscene-admin') {
+    if (password.trim() === adminPasscode) {
       setPassError('');
       setStep(2);
       sendOtp();
@@ -88,7 +91,7 @@ export default function Admin() {
       setOtpError('');
       
       const { error } = await supabase.auth.signInWithOtp({
-        email: 'shajidul.32@gmail.com',
+        email: adminEmail,
         options: {
           shouldCreateUser: false
         }
@@ -99,7 +102,7 @@ export default function Admin() {
         setOtpError(`Verification notice: ${error.message}. Offline developer bypass enabled. Enter code "000000".`);
       } else {
         setResendTimer(60);
-        setOtpError('OTP Code sent successfully to shajidul.32@gmail.com.');
+        setOtpError(`OTP Code sent successfully to ${adminEmail}.`);
       }
     } catch {
       setOtpError('Network error sending OTP. Enter local bypass code "000000".');
@@ -126,7 +129,7 @@ export default function Admin() {
       }
 
       const { error } = await supabase.auth.verifyOtp({
-        email: 'shajidul.32@gmail.com',
+        email: adminEmail,
         token: otpCode.trim(),
         type: 'email'
       });
@@ -173,13 +176,13 @@ export default function Admin() {
     try {
       setLoadingAnnouncement(true);
       const { data, error } = await supabase
-        .from('watch_parties')
-        .select('*')
-        .eq('room_code', 'SYSTEM_ANNOUNCEMENT')
+        .from('system_config')
+        .select('value')
+        .eq('key', 'SYSTEM_ANNOUNCEMENT')
         .single();
 
       if (!error && data) {
-        setAnnouncementText(data.room_name);
+        setAnnouncementText(data.value);
         setAnnouncementExists(true);
       } else {
         setAnnouncementText('');
@@ -196,13 +199,14 @@ export default function Admin() {
   const fetchMaintenance = async () => {
     try {
       const { data, error } = await supabase
-        .from('watch_parties')
-        .select('*')
-        .eq('room_code', 'SYSTEM_MAINTENANCE')
+        .from('system_config')
+        .select('value')
+        .eq('key', 'SYSTEM_MAINTENANCE')
         .single();
-      if (!error && data) {
-        setMaintenanceActive(data.is_public);
-        setMaintenanceDesc(data.room_name || '');
+      if (!error && data?.value) {
+        const config = JSON.parse(data.value);
+        setMaintenanceActive(config.active);
+        setMaintenanceDesc(config.eta || '');
       }
     } catch (err) {
       console.warn('Maintenance state query error:', err.message);
@@ -213,12 +217,12 @@ export default function Admin() {
   const fetchHeroSpotlight = async () => {
     try {
       const { data, error } = await supabase
-        .from('watch_parties')
-        .select('*')
-        .eq('room_code', 'SYSTEM_HERO_MEDIA')
+        .from('system_config')
+        .select('value')
+        .eq('key', 'SYSTEM_HERO_MEDIA')
         .single();
-      if (!error && data && data.room_name) {
-        const [type, id] = data.room_name.split(':');
+      if (!error && data && data.value) {
+        const [type, id] = data.value.split(':');
         setHeroMediaType(type || 'movie');
         setHeroMediaId(id || '');
         setHeroCustomActive(true);
@@ -234,12 +238,12 @@ export default function Admin() {
   const fetchGlobalServer = async () => {
     try {
       const { data, error } = await supabase
-        .from('watch_parties')
-        .select('*')
-        .eq('room_code', 'SYSTEM_DEFAULT_SERVER')
+        .from('system_config')
+        .select('value')
+        .eq('key', 'SYSTEM_DEFAULT_SERVER')
         .single();
-      if (!error && data && data.room_name) {
-        setGlobalDefaultServer(data.room_name);
+      if (!error && data && data.value) {
+        setGlobalDefaultServer(data.value);
       }
     } catch (err) {
       console.warn('Server config query error:', err.message);
@@ -342,18 +346,10 @@ export default function Admin() {
     try {
       setLoadingAnnouncement(true);
       const { error } = await supabase
-        .from('watch_parties')
+        .from('system_config')
         .upsert({
-          room_code: 'SYSTEM_ANNOUNCEMENT',
-          room_name: announcementText.trim(),
-          is_public: false,
-          host_name: 'SYSTEM',
-          media_id: 0,
-          media_type: 'movie',
-          title: 'SYSTEM_ANNOUNCEMENT',
-          host_control: 'host-only'
-        }, {
-          onConflict: 'room_code'
+          key: 'SYSTEM_ANNOUNCEMENT',
+          value: announcementText.trim()
         });
 
       if (error) throw error;
@@ -371,9 +367,9 @@ export default function Admin() {
     try {
       setLoadingAnnouncement(true);
       const { error } = await supabase
-        .from('watch_parties')
+        .from('system_config')
         .delete()
-        .eq('room_code', 'SYSTEM_ANNOUNCEMENT');
+        .eq('key', 'SYSTEM_ANNOUNCEMENT');
 
       if (error) throw error;
       setAnnouncementText('');
@@ -391,19 +387,15 @@ export default function Admin() {
     e.preventDefault();
     try {
       setSavingMaintenance(true);
+      const value = JSON.stringify({
+        active: maintenanceActive,
+        eta: maintenanceDesc.trim()
+      });
       const { error } = await supabase
-        .from('watch_parties')
+        .from('system_config')
         .upsert({
-          room_code: 'SYSTEM_MAINTENANCE',
-          room_name: maintenanceDesc.trim(),
-          is_public: maintenanceActive,
-          host_name: 'SYSTEM',
-          media_id: 0,
-          media_type: 'movie',
-          title: 'SYSTEM_MAINTENANCE',
-          host_control: 'host-only'
-        }, {
-          onConflict: 'room_code'
+          key: 'SYSTEM_MAINTENANCE',
+          value: value
         });
 
       if (error) throw error;
@@ -423,18 +415,10 @@ export default function Admin() {
     try {
       setSavingHero(true);
       const { error } = await supabase
-        .from('watch_parties')
+        .from('system_config')
         .upsert({
-          room_code: 'SYSTEM_HERO_MEDIA',
-          room_name: `${heroMediaType}:${heroMediaId.trim()}`,
-          is_public: false,
-          host_name: 'SYSTEM',
-          media_id: parseInt(heroMediaId) || 0,
-          media_type: heroMediaType,
-          title: 'SYSTEM_HERO_MEDIA',
-          host_control: 'host-only'
-        }, {
-          onConflict: 'room_code'
+          key: 'SYSTEM_HERO_MEDIA',
+          value: `${heroMediaType}:${heroMediaId.trim()}`
         });
 
       if (error) throw error;
@@ -452,9 +436,9 @@ export default function Admin() {
     try {
       setSavingHero(true);
       const { error } = await supabase
-        .from('watch_parties')
+        .from('system_config')
         .delete()
-        .eq('room_code', 'SYSTEM_HERO_MEDIA');
+        .eq('key', 'SYSTEM_HERO_MEDIA');
 
       if (error) throw error;
       setHeroMediaId('');
@@ -473,18 +457,10 @@ export default function Admin() {
     try {
       setSavingServer(true);
       const { error } = await supabase
-        .from('watch_parties')
+        .from('system_config')
         .upsert({
-          room_code: 'SYSTEM_DEFAULT_SERVER',
-          room_name: globalDefaultServer,
-          is_public: false,
-          host_name: 'SYSTEM',
-          media_id: 0,
-          media_type: 'movie',
-          title: 'SYSTEM_DEFAULT_SERVER',
-          host_control: 'host-only'
-        }, {
-          onConflict: 'room_code'
+          key: 'SYSTEM_DEFAULT_SERVER',
+          value: globalDefaultServer
         });
 
       if (error) throw error;
@@ -515,7 +491,7 @@ export default function Admin() {
             </div>
             <h2>2-Factor Verification</h2>
             <p style={{ marginBottom: '10px' }}>Enter the 6-digit verification code dispatched to:</p>
-            <p style={{ fontWeight: '600', color: 'var(--text-primary)', wordBreak: 'break-all', marginBottom: '24px' }}>shajidul.32@gmail.com</p>
+            <p style={{ fontWeight: '600', color: 'var(--text-primary)', wordBreak: 'break-all', marginBottom: '24px' }}>{adminEmail}</p>
             
             <form onSubmit={handleVerifyOtp} className="lock-form">
               <input 

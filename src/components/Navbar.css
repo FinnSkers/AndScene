@@ -529,3 +529,87 @@
   cursor: not-allowed;
 }
 
+/* ===== PWA Install Button ===== */
+.navbar__install-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: rgba(245, 166, 35, 0.08);
+  border: 1px solid rgba(245, 166, 35, 0.25);
+  color: var(--accent);
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  white-space: nowrap;
+}
+
+.navbar__install-btn:hover {
+  background: rgba(245, 166, 35, 0.15);
+  border-color: var(--accent);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-glow);
+  transform: translateY(-1px);
+}
+
+.navbar__install-btn:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 992px) {
+  .navbar__install-btn-text {
+    display: none; /* Icon-only on medium screens */
+  }
+  .navbar__install-btn {
+    padding: 6px;
+    width: 34px;
+    height: 34px;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .navbar__install-btn {
+    display: none; /* Hidden on mobile header, shown in sidebar instead */
+  }
+}
+
+/* Sidebar Install Prompt */
+.navbar__sidebar-install {
+  margin-top: auto;
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.navbar__sidebar-install-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: 12px;
+  background: var(--gradient-accent);
+  color: var(--bg-primary);
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-glow);
+}
+
+.navbar__sidebar-install-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glow-strong);
+  filter: brightness(1.05);
+}
+
+.navbar__sidebar-install-btn:active {
+  transform: translateY(0);
+}
+
+

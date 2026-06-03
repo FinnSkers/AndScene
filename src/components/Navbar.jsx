@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Bell, ChevronDown, Menu, X, User } from 'lucide-react';
+import { Search, Bell, ChevronDown, Menu, X, User, Download } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import './Navbar.css';
 
@@ -67,6 +67,36 @@ export default function Navbar() {
   const [resending, setResending] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   const notifRef = useRef(null);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+
+  // Listen to beforeinstallprompt event for PWA
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    const handleAppInstalled = () => {
+      setDeferredPrompt(null);
+      console.log('PWA was installed');
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log(`User response to the install prompt: ${outcome}`);
+    setDeferredPrompt(null);
+  };
 
   // Close notifications on outside click
   useEffect(() => {
@@ -177,6 +207,17 @@ export default function Navbar() {
 
         {/* Right */}
         <div className="navbar__right">
+          {deferredPrompt && (
+            <button
+              className="navbar__install-btn"
+              onClick={handleInstallClick}
+              title="Install Desktop App"
+            >
+              <Download size={16} />
+              <span className="navbar__install-btn-text">Install App</span>
+            </button>
+          )}
+
           {/* Search */}
           <button
             className="navbar__icon-btn"
@@ -381,6 +422,21 @@ export default function Navbar() {
                   </li>
                 ))}
               </ul>
+
+              {deferredPrompt && (
+                <div className="navbar__sidebar-install">
+                  <button
+                    className="navbar__sidebar-install-btn"
+                    onClick={() => {
+                      handleInstallClick();
+                      setSidebarOpen(false);
+                    }}
+                  >
+                    <Download size={18} />
+                    <span>Install Application</span>
+                  </button>
+                </div>
+              )}
             </motion.aside>
           </>
         )}

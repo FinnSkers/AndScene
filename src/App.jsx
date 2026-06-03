@@ -26,13 +26,14 @@ function App() {
     const checkMaintenance = async () => {
       try {
         const { data, error } = await supabase
-          .from('watch_parties')
-          .select('*')
-          .eq('room_code', 'SYSTEM_MAINTENANCE')
+          .from('system_config')
+          .select('value')
+          .eq('key', 'SYSTEM_MAINTENANCE')
           .single();
-        if (!error && data) {
-          setIsMaintenance(data.is_public);
-          setMaintenanceEta(data.room_name || 'Soon');
+        if (!error && data?.value) {
+          const config = JSON.parse(data.value);
+          setIsMaintenance(config.active);
+          setMaintenanceEta(config.eta || 'Soon');
         }
       } catch (err) {
         console.warn('Maintenance check query failed, defaulting to online mode.', err);

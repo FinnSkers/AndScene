@@ -40,13 +40,13 @@ export default function Hero() {
     const loadHero = async () => {
       try {
         const { data: configData, error: configError } = await supabase
-          .from('watch_parties')
-          .select('*')
-          .eq('room_code', 'SYSTEM_HERO_MEDIA')
+          .from('system_config')
+          .select('value')
+          .eq('key', 'SYSTEM_HERO_MEDIA')
           .single();
 
-        if (!configError && configData && configData.room_name) {
-          const [mediaType, mediaId] = configData.room_name.split(':');
+        if (!configError && configData && configData.value) {
+          const [mediaType, mediaId] = configData.value.split(':');
           if (mediaId && mediaType) {
             const detailItem = await fetchDetails(mediaId, mediaType);
             if (detailItem) {

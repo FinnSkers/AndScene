@@ -46,12 +46,12 @@ export default function VideoPlayer({ type, tmdbId, season = 1, episode = 1, sta
       const loadDefaultServer = async () => {
         try {
           const { data, error } = await supabase
-            .from('watch_parties')
-            .select('room_name')
-            .eq('room_code', 'SYSTEM_DEFAULT_SERVER')
+            .from('system_config')
+            .select('value')
+            .eq('key', 'SYSTEM_DEFAULT_SERVER')
             .single();
-          if (!error && data && data.room_name) {
-            const index = parseInt(data.room_name);
+          if (!error && data?.value) {
+            const index = parseInt(data.value);
             if (!isNaN(index) && index >= 0 && index < SOURCES.length) {
               setSourceIndex(index);
             }

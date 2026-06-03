@@ -4,7 +4,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import './UserManagement.css';
 
-const MASTER_PASSWORD = "andscene_master";
+const MASTER_PASSWORD = import.meta.env.VITE_MASTER_PASSWORD || "andscene_master";
 
 export default function UserManagement() {
   const { user, fetchAllUsers, updateUser, deleteUser, resetUserPassword } = useApp();
