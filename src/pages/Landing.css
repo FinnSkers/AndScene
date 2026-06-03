@@ -61,24 +61,69 @@
   overflow: hidden;
 }
 
-.landing-hero-bg {
+.landing-movie-wall {
   position: absolute;
   inset: 0;
-  background-size: cover;
-  background-position: center;
-  filter: brightness(0.25);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  transform: rotate(-12deg) scale(1.25) translateY(-50px);
+  opacity: 0.15;
+  filter: blur(3px) saturate(0.7) brightness(0.8);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.movie-wall-col {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.movie-wall-col img {
+  width: 100%;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.col-up {
+  animation: scrollUp 45s linear infinite;
+}
+
+.col-down {
+  animation: scrollDown 45s linear infinite;
+}
+
+.col-up.delay-1 {
+  animation-duration: 55s;
+}
+
+.col-down.delay-2 {
+  animation-duration: 50s;
+}
+
+@keyframes scrollUp {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-50%); }
+}
+
+@keyframes scrollDown {
+  0% { transform: translateY(-50%); }
+  100% { transform: translateY(0); }
 }
 
 .landing-hero-gradient {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(10, 10, 18, 0.7) 0%,
-    rgba(10, 10, 18, 0.4) 40%,
-    rgba(10, 10, 18, 0.8) 80%,
+  background: radial-gradient(
+    circle at center,
+    rgba(10, 10, 18, 0.3) 0%,
+    rgba(10, 10, 18, 0.7) 50%,
+    rgba(10, 10, 18, 0.95) 85%,
     var(--bg-primary) 100%
   );
+  z-index: 2;
 }
 
 .landing-hero-content {
@@ -210,6 +255,10 @@
 .landing-feature-img {
   flex: 1;
   max-width: 500px;
+  overflow: hidden;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-medium);
+  box-shadow: var(--shadow-elevated);
 }
 
 .landing-feature-img img {
@@ -217,8 +266,12 @@
   height: auto;
   border-radius: var(--radius-xl);
   object-fit: cover;
-  border: 1px solid var(--border-medium);
-  box-shadow: var(--shadow-elevated);
+  display: block;
+  transition: transform var(--transition-slow);
+}
+
+.landing-feature:hover .landing-feature-img img {
+  transform: scale(1.05);
 }
 
 /* ── FAQ Section ── */

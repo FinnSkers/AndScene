@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, Plus, X } from 'lucide-react';
+import { fetchTrending } from '../services/tmdb';
 import './Landing.css';
 
 const faqData = [
@@ -36,24 +37,64 @@ const features = [
   {
     title: 'Enjoy on your TV',
     text: 'Watch on Smart TVs, PlayStation, Xbox, Chromecast, Apple TV, Blu-ray players, and more.',
-    img: 'https://picsum.photos/seed/nfxfeat1/600/400',
+    img: 'https://image.tmdb.org/t/p/w780/56v21GjldY05nli7eg17rZ25BuY.jpg',
   },
   {
     title: 'Download your shows to watch offline',
     text: 'Save your favorites easily and always have something to watch.',
-    img: 'https://picsum.photos/seed/nfxfeat2/600/400',
+    img: 'https://image.tmdb.org/t/p/w780/iH7325LzSp5g96jABz6Q3m1j55z.jpg',
   },
   {
     title: 'Watch everywhere',
     text: 'Stream unlimited movies and TV shows on your phone, tablet, laptop, and TV.',
-    img: 'https://picsum.photos/seed/nfxfeat3/600/400',
+    img: 'https://image.tmdb.org/t/p/w780/8YgBBsb59Q5jC5T2t48R40x79ce.jpg',
   },
   {
     title: 'Create profiles for kids',
     text: 'Send kids on adventures with their favorite characters in a space made just for them — free with your membership.',
-    img: 'https://picsum.photos/seed/nfxfeat4/600/400',
+    img: 'https://image.tmdb.org/t/p/w780/otxF5paY2wXm3jT51900F36D4x9.jpg',
   },
 ];
+
+const FALLBACK_POSTERS = [
+  'https://image.tmdb.org/t/p/w500/lf8QjIk17wJ42VMgZJQSldfsH2q.jpg',
+  'https://image.tmdb.org/t/p/w500/vpnVM9B6mEN49uYhJOoHrmydH2t.jpg',
+  'https://image.tmdb.org/t/p/w500/8cdWjvZqMSd2fJg8evGaVywIFJ5.jpg',
+  'https://image.tmdb.org/t/p/w500/kDp1vUBUPvc15H3m816v6mR8w55.jpg',
+  'https://image.tmdb.org/t/p/w500/sh7512c5w2a9zs19NOLqg42arCc.jpg',
+  'https://image.tmdb.org/t/p/w500/1pdfxBEPnm48455FOyS5YCEbH3G.jpg',
+  'https://image.tmdb.org/t/p/w500/fECBtXtAs6j212h1894a3Q64w2y.jpg',
+  'https://image.tmdb.org/t/p/w500/z1o16419g3UP2r7i4863j8f1a23.jpg',
+  'https://image.tmdb.org/t/p/w500/2y7e82b7WOL3wE6fLHO79c6H9c3.jpg',
+  'https://image.tmdb.org/t/p/w500/d51n3w76s6fE8x73J486c9j8f1a.jpg'
+];
+
+function MovieWall({ posters }) {
+  const displayPosters = posters && posters.length >= 10 ? posters : FALLBACK_POSTERS;
+  
+  // Double arrays to ensure smooth infinite marquee scroll
+  const col1 = [...displayPosters.slice(0, 5), ...displayPosters.slice(0, 5)];
+  const col2 = [...displayPosters.slice(5, 10), ...displayPosters.slice(5, 10)];
+  const col3 = [...displayPosters.slice(2, 7), ...displayPosters.slice(2, 7)];
+  const col4 = [...displayPosters.slice(4, 9), ...displayPosters.slice(4, 9)];
+
+  return (
+    <div className="landing-movie-wall">
+      <div className="movie-wall-col col-up">
+        {col1.map((url, i) => <img key={`col1-${i}`} src={url} alt="poster" />)}
+      </div>
+      <div className="movie-wall-col col-down">
+        {col2.map((url, i) => <img key={`col2-${i}`} src={url} alt="poster" />)}
+      </div>
+      <div className="movie-wall-col col-up delay-1">
+        {col3.map((url, i) => <img key={`col3-${i}`} src={url} alt="poster" />)}
+      </div>
+      <div className="movie-wall-col col-down delay-2">
+        {col4.map((url, i) => <img key={`col4-${i}`} src={url} alt="poster" />)}
+      </div>
+    </div>
+  );
+}
 
 /* Reusable email CTA */
 function EmailCTA({ navigate }) {
@@ -138,6 +179,21 @@ function ScrollReveal({ children, className, delay = 0 }) {
 export default function Landing() {
   const navigate = useNavigate();
   const [openFAQ, setOpenFAQ] = useState(null);
+  const [posters, setPosters] = useState([]);
+
+  useEffect(() => {
+    const loadPosters = async () => {
+      try {
+        const trend = await fetchTrending();
+        if (trend && trend.length >= 10) {
+          setPosters(trend.map(item => item.poster).filter(Boolean));
+        }
+      } catch (err) {
+        console.warn('Failed to load landing trending posters:', err.message);
+      }
+    };
+    loadPosters();
+  }, []);
 
   return (
     <div className="landing-page">
@@ -154,31 +210,59 @@ export default function Landing() {
 
       {/* ── Hero ── */}
       <section className="landing-hero">
-        <div
-          className="landing-hero-bg"
-          style={{
-            backgroundImage:
-              'url(https://picsum.photos/seed/nfxlanding/1920/1080)',
-          }}
-        />
+        <MovieWall posters={posters} />
         <div className="landing-hero-gradient" />
 
         <motion.div
           className="landing-hero-content"
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: { opacity: 0 },
+            visible: {
+              opacity: 1,
+              transition: {
+                staggerChildren: 0.15,
+                delayChildren: 0.2
+              }
+            }
+          }}
         >
-          <h1 className="landing-hero-title">
+          <motion.h1 
+            className="landing-hero-title"
+            variants={{
+              hidden: { opacity: 0, y: 30 },
+              visible: { opacity: 1, y: 0, transition: { type: 'spring', damping: 15 } }
+            }}
+          >
             Unlimited movies, TV shows, and more
-          </h1>
-          <p className="landing-hero-sub">
+          </motion.h1>
+          <motion.p 
+            className="landing-hero-sub"
+            variants={{
+              hidden: { opacity: 0, y: 20 },
+              visible: { opacity: 1, y: 0 }
+            }}
+          >
             Starts at $6.99. Cancel anytime.
-          </p>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: 'var(--space-md)', fontSize: 'var(--text-base)' }}>
+          </motion.p>
+          <motion.p 
+            style={{ color: 'var(--text-secondary)', marginBottom: 'var(--space-md)', fontSize: 'var(--text-base)' }}
+            variants={{
+              hidden: { opacity: 0 },
+              visible: { opacity: 1 }
+            }}
+          >
             Ready to watch? Enter your email to create or restart your membership.
-          </p>
-          <EmailCTA navigate={navigate} />
+          </motion.p>
+          <motion.div
+            variants={{
+              hidden: { opacity: 0, scale: 0.95 },
+              visible: { opacity: 1, scale: 1, transition: { type: 'spring', damping: 12 } }
+            }}
+          >
+            <EmailCTA navigate={navigate} />
+          </motion.div>
         </motion.div>
       </section>
 

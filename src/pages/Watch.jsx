@@ -45,6 +45,28 @@ export default function Watch() {
   const chatEndRef = useRef(null);
   const prevParticipantsRef = useRef([]);
 
+  // Refs for tracking host playback time for auto-syncing new joiners
+  const hostPlaybackStartSecondsRef = useRef(0);
+  const hostPlaybackStartTimestampRef = useRef(null);
+
+  const getHostCurrentTime = () => {
+    if (!hostPlaybackStartTimestampRef.current) return 0;
+    const elapsed = Math.floor((Date.now() - hostPlaybackStartTimestampRef.current) / 1000);
+    return hostPlaybackStartSecondsRef.current + elapsed;
+  };
+
+  const updateHostPlaybackTracking = (seconds) => {
+    hostPlaybackStartSecondsRef.current = seconds;
+    hostPlaybackStartTimestampRef.current = Date.now();
+  };
+
+  // Initialize host tracking to 0 on mount if host
+  useEffect(() => {
+    if (isHost) {
+      updateHostPlaybackTracking(0);
+    }
+  }, [isHost]);
+
   // 1. Fetch Movie/TV details
   useEffect(() => {
     const loadDetails = async () => {
@@ -140,6 +162,20 @@ export default function Watch() {
                 isSystem: true,
                 text: `👋 ${u.name} joined the party`
               }]);
+
+              // If a guest joins and we are the host, automatically send them our current estimated time
+              if (isHost) {
+                const totalSeconds = getHostCurrentTime();
+                const senderName = activeProfile?.name || user?.email?.split('@')[0] || 'Host';
+                channel.send({
+                  type: 'broadcast',
+                  event: 'sync-time',
+                  payload: {
+                    seconds: totalSeconds,
+                    sender: senderName
+                  }
+                });
+              }
             }
           });
           // Leavers
@@ -180,6 +216,21 @@ export default function Watch() {
       })
       .on('broadcast', { event: 'room-terminated' }, () => {
         setIsTerminated(true);
+      })
+      .on('broadcast', { event: 'request-sync' }, () => {
+        // Respond to sync requests if we are the host
+        if (isHost) {
+          const totalSeconds = getHostCurrentTime();
+          const senderName = activeProfile?.name || user?.email?.split('@')[0] || 'Host';
+          channel.send({
+            type: 'broadcast',
+            event: 'sync-time',
+            payload: {
+              seconds: totalSeconds,
+              sender: senderName
+            }
+          });
+        }
       });
 
     channel.subscribe(async (status) => {
@@ -188,6 +239,17 @@ export default function Watch() {
           name: userDisplayName,
           color: userColor
         });
+
+        // Request initial playback sync if we are joining as a guest
+        if (!isHost) {
+          setTimeout(() => {
+            channel.send({
+              type: 'broadcast',
+              event: 'request-sync',
+              payload: {}
+            });
+          }, 800);
+        }
       }
     });
 
@@ -291,6 +353,8 @@ export default function Watch() {
     const min = parseInt(syncMin) || 0;
     const sec = parseInt(syncSec) || 0;
     const totalSeconds = min * 60 + sec;
+
+    updateHostPlaybackTracking(totalSeconds);
 
     const senderName = activeProfile?.name || user?.email?.split('@')[0] || 'Guest';
 
