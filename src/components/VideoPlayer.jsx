@@ -106,11 +106,11 @@ export default function VideoPlayer({ type, tmdbId, season = 1, episode = 1, sta
         <iframe
           key={`${sourceIndex}-${startTime}`}
           src={embedUrl}
-          allowFullScreen
+          allowFullScreen={true}
           frameBorder="0"
           title={`Streaming ${type}`}
           className="video-iframe"
-          allow="autoplay; fullscreen"
+          allow="autoplay; fullscreen; encrypted-media; picture-in-picture; accelerometer; gyroscope"
         />
 
         {/* Floating Server Controller overlay - Minimal Horizontal Bar */}
