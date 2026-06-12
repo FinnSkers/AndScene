@@ -1,9 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import './ProfileSelect.css';
+
+const GREETINGS = [
+  'Ready for movie night?',
+  'What are we watching today?',
+  'Welcome back!',
+  'Time to stream!',
+  'Pick your vibe tonight',
+  'Lights, camera, action!',
+  'Your next binge awaits',
+];
 
 const containerVariants = {
   hidden: {},
@@ -28,6 +38,7 @@ const cardVariants = {
 export default function ProfileSelect() {
   const navigate = useNavigate();
   const { user, userProfiles, createProfile, setActiveProfile } = useApp();
+  const greeting = useMemo(() => GREETINGS[Math.floor(Math.random() * GREETINGS.length)], []);
   const [showAddForm, setShowAddForm] = useState(false);
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
@@ -65,6 +76,14 @@ export default function ProfileSelect() {
 
   return (
     <div className="profile-select-page">
+      {/* Animated Blob Background */}
+      <div className="profile-blobs" aria-hidden="true">
+        <div className="profile-blob profile-blob--1" />
+        <div className="profile-blob profile-blob--2" />
+        <div className="profile-blob profile-blob--3" />
+        <div className="profile-blob profile-blob--4" />
+      </div>
+
       <motion.h1
         className="profile-select-title"
         initial={{ opacity: 0, y: -20 }}
@@ -73,6 +92,15 @@ export default function ProfileSelect() {
       >
         Who&apos;s watching?
       </motion.h1>
+
+      <motion.p
+        className="profile-select-subtitle"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.15 }}
+      >
+        {greeting}
+      </motion.p>
 
       <motion.div
         className="profile-grid"

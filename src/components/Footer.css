@@ -34,7 +34,8 @@
 
 .footer__social-link:hover {
   color: var(--accent);
-  transform: scale(1.1);
+  transform: scale(1.15);
+  filter: drop-shadow(0 0 8px rgba(245, 166, 35, 0.5));
 }
 
 .footer__quick {

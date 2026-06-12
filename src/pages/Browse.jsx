@@ -1,13 +1,15 @@
 /* eslint-disable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
 import { useState, useEffect, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, Film, Loader2 } from 'lucide-react';
+import { ChevronDown, Film, Loader2, Sparkles, Play, Star } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import DecisionModeModal from '../components/DecisionModeModal';
 import {
   fetchMovies,
   fetchSeries,
   fetchTrending,
+  fetchUpcoming,
   discoverMovies,
   discoverSeries,
   getMovieGenres,
@@ -30,7 +32,7 @@ const sortOptions = [
 const typeLabels = {
   tv: 'TV Shows',
   movies: 'Movies',
-  new: 'New & Popular',
+  new: 'New & Upcoming',
   mylist: 'My List',
 };
 
@@ -39,8 +41,10 @@ export default function Browse() {
   const type = searchParams.get('type') || 'movies';
 
   const { myList, openModal } = useApp();
+  const navigate = useNavigate();
   const [activeGenre, setActiveGenre] = useState(null);
   const [sort, setSort] = useState('suggested');
+  const [isDecisionModeOpen, setIsDecisionModeOpen] = useState(false);
   
   const [genres, setGenres] = useState([]);
   const [content, setContent] = useState([]);
@@ -81,7 +85,7 @@ export default function Browse() {
         } else if (type === 'movies') {
           data = activeGenre ? await discoverMovies({ with_genres: activeGenre, page }) : await fetchMovies('popular', page);
         } else if (type === 'new') {
-          data = await fetchTrending(page);
+          data = await fetchUpcoming(page);
         } else if (type === 'mylist') {
           data = page === 1 ? myList : [];
         }
@@ -124,6 +128,16 @@ export default function Browse() {
 
   const pageTitle = typeLabels[type] || 'Browse';
 
+  // Pick a featured item for the mini-hero from loaded content
+  const featuredItem = useMemo(() => {
+    if (!content.length) return null;
+    // Pick a random item from the first 8 items that has a backdrop
+    const candidates = content.slice(0, 8).filter(i => i.backdrop);
+    if (!candidates.length) return null;
+    return candidates[Math.floor(Math.random() * candidates.length)];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [content.length > 0 ? content[0]?.id : null]);
+
   return (
     <div className="browse-page">
       <Navbar />
@@ -131,17 +145,79 @@ export default function Browse() {
       {/* ── Header ── */}
       <div className="browse-header">
         <h1 className="browse-title">{pageTitle}</h1>
-        <div className="browse-sort">
-          <select value={sort} onChange={(e) => setSort(e.target.value)}>
-            {sortOptions.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-          <ChevronDown size={16} className="browse-sort-icon" />
+        <div className="browse-header-actions">
+          <button 
+            type="button"
+            className="decision-mode-trigger-btn glass"
+            onClick={() => setIsDecisionModeOpen(true)}
+          >
+            <Sparkles size={16} className="sparkles-icon" />
+            Decision Mode
+          </button>
+
+          <div className="browse-sort">
+            <select value={sort} onChange={(e) => setSort(e.target.value)}>
+              {sortOptions.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+            <ChevronDown size={16} className="browse-sort-icon" />
+          </div>
         </div>
       </div>
+
+      {/* ── Mini-Hero Banner ── */}
+      {featuredItem && !loading && (
+        <motion.div
+          className="browse-mini-hero"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+        >
+          <img
+            className="browse-mini-hero-bg"
+            src={featuredItem.backdrop}
+            alt={featuredItem.title}
+          />
+          <div className="browse-mini-hero-gradient" />
+          <div className="browse-mini-hero-content">
+            <motion.h2
+              className="browse-mini-hero-title"
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+            >
+              {featuredItem.title}
+            </motion.h2>
+            <motion.div
+              className="browse-mini-hero-meta"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.35 }}
+            >
+              {featuredItem.match && (
+                <span className="browse-mini-hero-rating">
+                  <Star size={14} /> {(featuredItem.match / 10).toFixed(1)}
+                </span>
+              )}
+              {featuredItem.year && <span className="browse-mini-hero-year">{featuredItem.year}</span>}
+              {featuredItem.genre?.slice(0, 2).map((g, i) => (
+                <span key={i} className="browse-mini-hero-genre">{g}</span>
+              ))}
+            </motion.div>
+            <motion.button
+              className="browse-mini-hero-play"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => navigate(`/watch/${featuredItem.type}/${featuredItem.id}`)}
+            >
+              <Play size={18} fill="currentColor" /> Play Now
+            </motion.button>
+          </div>
+        </motion.div>
+      )}
 
       {/* ── Genre Filter Bar ── */}
       {genres.length > 0 && (
@@ -166,8 +242,16 @@ export default function Browse() {
 
       {/* ── Content Grid ── */}
       {loading && page === 1 ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '100px 0', color: 'var(--accent)' }}>
-          <Loader2 className="spinner" size={48} />
+        <div className="browse-grid browse-skeleton-grid">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <div key={i} className="browse-skeleton-card">
+              <div className="browse-skeleton-img shimmer" />
+              <div className="browse-skeleton-text">
+                <div className="browse-skeleton-line shimmer" style={{ width: '75%' }} />
+                <div className="browse-skeleton-line shimmer" style={{ width: '45%', height: '10px' }} />
+              </div>
+            </div>
+          ))}
         </div>
       ) : (
         <>
@@ -196,11 +280,57 @@ export default function Browse() {
                     onClick={() => openModal(item)}
                   >
                     <img src={item.backdrop || item.poster} alt={item.title} loading="lazy" />
-                    <div className="browse-grid-card-overlay">
-                      <span className="browse-grid-card-title">{item.title}</span>
-                      <span className="browse-grid-card-meta">
-                        {item.match}% Match &middot; {item.year}
+                    {/* Rating Badge */}
+                    {item.match > 0 && (
+                      <span className="browse-card-rating-badge">
+                        ★ {(item.match / 10).toFixed(1)}
                       </span>
+                    )}
+                    {/* New Badge */}
+                    {(item.year === '2025' || item.year === '2026') && (
+                      <span className="browse-card-new-badge">New</span>
+                    )}
+                    <div className="browse-grid-card-overlay">
+                      <div className="browse-card-top-row">
+                        <span className="browse-card-match">{item.match}% Match</span>
+                        <span className="browse-card-year">{item.year}</span>
+                        {item.duration && <span className="browse-card-duration">{item.duration}</span>}
+                      </div>
+
+                      {item.description && (
+                        <p className="browse-card-description">{item.description}</p>
+                      )}
+
+                      {item.releaseDate && type === 'new' && (
+                        <div className="browse-card-release-row">
+                          <span className="browse-card-release-label">Release Date: </span>
+                          <span className="browse-card-release-val">{item.releaseDate}</span>
+                        </div>
+                      )}
+
+                      <div className="browse-card-bottom-row">
+                        <div className="browse-card-text">
+                          <h4 className="browse-grid-card-title">{item.title}</h4>
+                          {item.genre && item.genre.length > 0 && (
+                            <div className="browse-card-genres">
+                              {item.genre.slice(0, 2).map((g, idx) => (
+                                <span key={idx} className="browse-card-genre-tag">{g}</span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          className="browse-card-play-btn"
+                          title={`Play ${item.title}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/watch/${item.type || 'movie'}/${item.id}`);
+                          }}
+                        >
+                          <Play size={12} fill="currentColor" />
+                        </button>
+                      </div>
                     </div>
                   </motion.div>
                 ))
@@ -224,6 +354,11 @@ export default function Browse() {
 
       <ContentModal />
       <SearchOverlay />
+      <DecisionModeModal 
+        isOpen={isDecisionModeOpen}
+        onClose={() => setIsDecisionModeOpen(false)}
+        onSelectContent={(item) => openModal(item)}
+      />
       <Footer />
     </div>
   );

@@ -66,6 +66,7 @@ const mapTmdbItem = (item, defaultType = 'movie') => {
     type: type === 'tv' ? 'series' : type,
     genre: (item.genre_ids || []).map(id => genreMap[id]).filter(Boolean),
     year: (item.release_date || item.first_air_date || '').split('-')[0],
+    releaseDate: item.release_date || item.first_air_date,
     rating: item.adult ? 'R' : 'PG-13', 
     duration: type === 'movie' ? '2h 10m' : '1 Season', 
     match: Math.round((item.vote_average || 0) * 10),
@@ -117,7 +118,7 @@ export const searchMulti = async (query, page = 1) => {
 
 export const fetchTrailer = async (id, type) => {
   try {
-    const tmdbType = type === 'series' ? 'tv' : 'movie';
+    const tmdbType = (type === 'series' || type === 'tv') ? 'tv' : 'movie';
     const { data } = await tmdb.get(`/${tmdbType}/${id}/videos`);
     const trailer = data.results.find(v => v.type === 'Trailer' && v.site === 'YouTube');
     return trailer ? trailer.key : null;
@@ -127,7 +128,7 @@ export const fetchTrailer = async (id, type) => {
 };
 
 export const fetchDetails = async (id, type) => {
-  const tmdbType = type === 'series' ? 'tv' : 'movie';
+  const tmdbType = (type === 'series' || type === 'tv') ? 'tv' : 'movie';
   const endpoint = `/${tmdbType}/${id}`;
   const { data } = await tmdb.get(endpoint, {
     params: { append_to_response: 'credits,similar,videos' }
@@ -152,6 +153,25 @@ export const fetchDetails = async (id, type) => {
   }
 
   mapped.similar = (data.similar?.results || []).map(i => mapTmdbItem(i, type)).filter(Boolean);
+
+  // Full credits for Cast & Crew section
+  mapped.credits = {
+    cast: (data.credits?.cast || []).map(c => ({
+      id: c.id,
+      name: c.name,
+      character: c.character,
+      profile_path: c.profile_path,
+    })),
+    crew: (data.credits?.crew || []),
+  };
+
+  // Extra details for Details section
+  mapped.genres = (data.genres || []).map(g => g.name);
+  mapped.productionCompanies = (data.production_companies || []).map(c => c.name);
+  mapped.runtime = data.runtime || null;
+  mapped.voteAverage = data.vote_average || 0;
+  mapped.tagline = data.tagline || '';
+  mapped.status = data.status || '';
   
   return mapped;
 };
@@ -169,4 +189,9 @@ export const getMovieGenres = async () => {
 export const getTvGenres = async () => {
   const { data } = await tmdb.get('/genre/tv/list');
   return data.genres;
+};
+
+export const fetchUpcoming = async (page = 1) => {
+  const { data } = await tmdb.get('/movie/upcoming', { params: { page } });
+  return data.results.map(i => mapTmdbItem(i, 'movie')).filter(Boolean);
 };

@@ -107,7 +107,7 @@
 
   /* ─── Layout ─── */
   --navbar-height: 72px;
-  --content-padding: 5%;
+  --content-padding: 6%;
 }
 
 /* ═══════════════════════════════════════════
@@ -138,6 +138,79 @@ body {
 #root {
   min-height: 100vh;
 }
+
+/* ═══════════════════════════════════════════
+   AMBIENT BACKGROUND — Cinematic Gradient Mesh
+   ═══════════════════════════════════════════ */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 40%, rgba(139, 92, 246, 0.08) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 60% at 80% 20%, rgba(245, 166, 35, 0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 70% 50% at 50% 90%, rgba(96, 165, 250, 0.05) 0%, transparent 60%);
+  animation: ambientShift 25s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes ambientShift {
+  0% {
+    background:
+      radial-gradient(ellipse 80% 50% at 20% 40%, rgba(139, 92, 246, 0.08) 0%, transparent 70%),
+      radial-gradient(ellipse 60% 60% at 80% 20%, rgba(245, 166, 35, 0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 70% 50% at 50% 90%, rgba(96, 165, 250, 0.05) 0%, transparent 60%);
+  }
+  33% {
+    background:
+      radial-gradient(ellipse 70% 60% at 70% 30%, rgba(139, 92, 246, 0.07) 0%, transparent 70%),
+      radial-gradient(ellipse 80% 50% at 20% 80%, rgba(245, 166, 35, 0.05) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 60% 10%, rgba(96, 165, 250, 0.06) 0%, transparent 60%);
+  }
+  66% {
+    background:
+      radial-gradient(ellipse 60% 70% at 40% 60%, rgba(139, 92, 246, 0.06) 0%, transparent 70%),
+      radial-gradient(ellipse 70% 40% at 90% 50%, rgba(245, 166, 35, 0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 80% 60% at 30% 20%, rgba(96, 165, 250, 0.04) 0%, transparent 60%);
+  }
+  100% {
+    background:
+      radial-gradient(ellipse 80% 50% at 50% 50%, rgba(139, 92, 246, 0.09) 0%, transparent 70%),
+      radial-gradient(ellipse 60% 60% at 30% 70%, rgba(245, 166, 35, 0.05) 0%, transparent 60%),
+      radial-gradient(ellipse 70% 50% at 70% 30%, rgba(96, 165, 250, 0.06) 0%, transparent 60%);
+  }
+}
+
+/* Film grain texture */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.025;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+}
+
+/* Animated gradient text utility */
+.shimmer-text {
+  background: linear-gradient(90deg, var(--text-primary) 0%, var(--accent) 25%, var(--text-primary) 50%, var(--accent-secondary) 75%, var(--text-primary) 100%);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmerText 6s ease-in-out infinite;
+}
+
+@keyframes shimmerText {
+  0% { background-position: 100% 50%; }
+  50% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
 
 a {
   color: inherit;
@@ -436,14 +509,14 @@ input, select, textarea {
    ═══════════════════════════════════════════ */
 @media (max-width: 1200px) {
   :root {
-    --content-padding: 4%;
+    --content-padding: 5%;
   }
 }
 
 @media (max-width: 768px) {
   :root {
     --navbar-height: 60px;
-    --content-padding: 5%;
+    --content-padding: 6%;
   }
 
   .btn {
@@ -454,7 +527,7 @@ input, select, textarea {
 
 @media (max-width: 480px) {
   :root {
-    --content-padding: 16px;
+    --content-padding: 20px;
   }
 }
 

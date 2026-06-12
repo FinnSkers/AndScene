@@ -21,6 +21,7 @@ const NAV_LINKS = [
 
 const DROPDOWN_LINKS = [
   { label: 'Manage Profiles', path: '/profiles' },
+  { label: 'Watch Analytics', path: '/stats' },
   { label: 'TMDB Settings', action: 'tmdb-settings' },
   { label: 'Account', path: '/account' },
   { label: 'Help Center', path: '/help' },
@@ -61,7 +62,7 @@ export default function Navbar() {
   const dropdownTimeout = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
-  const { setIsSearchOpen, user, logout, setIsTMDBSettingsOpen, resendVerificationEmail } = useApp();
+  const { setIsSearchOpen, user, logout, setIsTMDBSettingsOpen, resendVerificationEmail, activeProfile } = useApp();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [resending, setResending] = useState(false);
@@ -298,7 +299,15 @@ export default function Navbar() {
             >
               <button className="navbar__profile-trigger" aria-label="Profile menu">
                 <div className="navbar__avatar">
-                  <User size={18} />
+                  {activeProfile?.avatar_url ? (
+                    <img
+                      src={activeProfile.avatar_url}
+                      alt={activeProfile.name || 'Profile'}
+                      className="navbar__avatar-img"
+                    />
+                  ) : (
+                    <User size={18} />
+                  )}
                 </div>
                 <ChevronDown size={14} className="navbar__chevron" />
               </button>
@@ -313,7 +322,7 @@ export default function Navbar() {
                     exit="exit"
                   >
                     <div className="navbar__dropdown-header">
-                      <div className="navbar__dropdown-name">User</div>
+                      <div className="navbar__dropdown-name">{activeProfile?.name || 'User'}</div>
                       <div className="navbar__dropdown-email">{user.email}</div>
                     </div>
 

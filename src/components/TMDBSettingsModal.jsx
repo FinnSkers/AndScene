@@ -31,6 +31,7 @@ export default function TMDBSettingsModal() {
   const { isTMDBSettingsOpen, setIsTMDBSettingsOpen, showToast } = useApp();
   const [keyInput, setKeyInput] = useState('');
   const [keyStatus, setKeyStatus] = useState('global'); // 'global' | 'custom'
+  const [cineProInput, setCineProInput] = useState('');
   const [testing, setTesting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -39,7 +40,9 @@ export default function TMDBSettingsModal() {
   useEffect(() => {
     if (isTMDBSettingsOpen) {
       const stored = localStorage.getItem('user_tmdb_api_key') || '';
+      const storedCinePro = localStorage.getItem('user_cinepro_server_url') || '';
       setKeyInput(stored);
+      setCineProInput(storedCinePro);
       setKeyStatus(stored ? 'custom' : 'global');
       setError('');
       setSuccess(false);
@@ -55,13 +58,23 @@ export default function TMDBSettingsModal() {
     setSuccess(false);
 
     const trimmedKey = keyInput.trim();
+    const trimmedCinePro = cineProInput.trim();
+
+    if (trimmedCinePro) {
+      localStorage.setItem('user_cinepro_server_url', trimmedCinePro);
+    } else {
+      localStorage.removeItem('user_cinepro_server_url');
+    }
 
     if (!trimmedKey) {
       // Revert to global free key
       localStorage.removeItem('user_tmdb_api_key');
       setKeyStatus('global');
-      showToast('Switched to Shared Global TMDB API.');
-      setIsTMDBSettingsOpen(false);
+      setSuccess(true);
+      showToast('Settings saved successfully.');
+      setTimeout(() => {
+        setIsTMDBSettingsOpen(false);
+      }, 1000);
       setTesting(false);
       return;
     }
@@ -93,11 +106,13 @@ export default function TMDBSettingsModal() {
 
   const handleClearKey = () => {
     localStorage.removeItem('user_tmdb_api_key');
+    localStorage.removeItem('user_cinepro_server_url');
     setKeyInput('');
+    setCineProInput('');
     setKeyStatus('global');
     setError('');
     setSuccess(false);
-    showToast('Reverted to Shared Global TMDB API.');
+    showToast('Reverted to default system settings.');
     setIsTMDBSettingsOpen(false);
   };
 
@@ -187,6 +202,20 @@ export default function TMDBSettingsModal() {
                 onChange={(e) => setKeyInput(e.target.value)}
                 autoFocus
               />
+            </div>
+
+            <div className="input-field-group" style={{ marginTop: '16px' }}>
+              <label htmlFor="cineproServerUrl">CinePro Core Resolver Server URL</label>
+              <input 
+                id="cineproServerUrl"
+                type="url" 
+                placeholder="e.g. http://localhost:3000"
+                value={cineProInput}
+                onChange={(e) => setCineProInput(e.target.value)}
+              />
+              <span className="input-helper-text" style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '4px', display: 'block' }}>
+                Run your local CinePro Core server instance to stream direct, ad-free video streams (.mp4 / .m3u8).
+              </span>
             </div>
 
             {error && (

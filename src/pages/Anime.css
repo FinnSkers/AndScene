@@ -1,0 +1,174 @@
+/* Anime Hub Stylesheet */
+
+.anime-page {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  position: relative;
+}
+
+.anime-loading-screen {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 80vh;
+  color: var(--accent);
+}
+
+/* Featured Spotlight Hero Section */
+.anime-hero {
+  position: relative;
+  height: 75vh;
+  min-height: 520px;
+  display: flex;
+  align-items: flex-end;
+  padding-left: var(--content-padding);
+  padding-right: var(--content-padding);
+  padding-bottom: var(--space-2xl);
+  overflow: hidden;
+}
+
+.anime-hero-backdrop-wrapper {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.anime-hero-backdrop {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 20%;
+}
+
+.anime-hero-vignette {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, var(--bg-primary) 0%, transparent 45%, rgba(10, 10, 18, 0.4) 100%);
+}
+
+.anime-hero-overlay-left {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(10, 10, 18, 0.95) 0%, rgba(10, 10, 18, 0.6) 35%, transparent 70%);
+}
+
+.anime-hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 650px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.anime-hero-spotlight-badge {
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  background: rgba(139, 92, 246, 0.15);
+  border: 1px solid rgba(139, 92, 246, 0.4);
+  color: var(--accent-secondary);
+  font-family: var(--font-display);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  padding: 6px 16px;
+  border-radius: var(--radius-full);
+  box-shadow: 0 0 15px rgba(139, 92, 246, 0.15);
+}
+
+.badge-sparkle {
+  animation: sparkleRotate 3s infinite linear;
+}
+
+@keyframes sparkleRotate {
+  0% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(180deg) scale(1.25); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+.anime-hero-content h1 {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4.5vw, 3.5rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -1.5px;
+  margin: 0;
+}
+
+.anime-hero-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.anime-hero-match {
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+}
+
+.anime-hero-year {
+  color: var(--text-primary);
+}
+
+.anime-hero-duration {
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-subtle);
+  padding: 2px 10px;
+  border-radius: var(--radius-sm);
+}
+
+.anime-hero-desc {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+  margin: 0;
+}
+
+.anime-hero-actions {
+  display: flex;
+  gap: var(--space-md);
+  margin-top: var(--space-sm);
+}
+
+.anime-hero-btn {
+  padding: 10px 24px;
+}
+
+/* Anime Content Rows Container */
+.anime-rows-container {
+  position: relative;
+  z-index: 2;
+  margin-top: calc(-1 * var(--space-2xl));
+  padding-bottom: var(--space-4xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+@media (max-width: 768px) {
+  .anime-hero {
+    height: 60vh;
+    padding-bottom: var(--space-xl);
+  }
+  .anime-hero-content {
+    max-width: 100%;
+  }
+  .anime-rows-container {
+    margin-top: var(--space-md);
+  }
+}

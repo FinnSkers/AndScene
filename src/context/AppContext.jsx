@@ -583,12 +583,12 @@ const login = useCallback(async (email, password) => {
     document.body.style.overflow = 'auto';
   }, []);
 
-  const addToContinueWatching = useCallback(async (item) => {
-    const progressVal = Math.floor(Math.random() * 80) + 10;
+  const addToContinueWatching = useCallback(async (item, progressVal = null) => {
+    const finalProgress = progressVal !== null ? Math.round(progressVal) : Math.floor(Math.random() * 80) + 10;
     
     if (!activeProfile?.id || !user?.id) {
       setContinueWatching(prev => {
-        const historyItem = { ...item, progress: progressVal };
+        const historyItem = { ...item, progress: finalProgress };
         const filtered = prev.filter(i => i.id !== item.id);
         return [historyItem, ...filtered].slice(0, 20);
       });
@@ -596,7 +596,7 @@ const login = useCallback(async (email, password) => {
     }
     if (user?.isTemp) {
       setContinueWatching(prev => {
-        const historyItem = { ...item, progress: progressVal };
+        const historyItem = { ...item, progress: finalProgress };
         const filtered = prev.filter(i => i.id !== item.id);
         const updated = [historyItem, ...filtered].slice(0, 20);
         localStorage.setItem(`andscene_sandbox_continue_${activeProfile.id}`, JSON.stringify(updated));
@@ -615,7 +615,7 @@ const login = useCallback(async (email, password) => {
           media_type: item.type === 'series' ? 'tv' : 'movie',
           title: item.title,
           poster_path: item.poster,
-          progress: progressVal,
+          progress: finalProgress,
           season: item.season || null,
           episode: item.episode || null,
           last_watched: new Date().toISOString(),
@@ -626,7 +626,7 @@ const login = useCallback(async (email, password) => {
       if (error) throw error;
 
       setContinueWatching(prev => {
-        const historyItem = { ...item, progress: progressVal };
+        const historyItem = { ...item, progress: finalProgress };
         const filtered = prev.filter(i => i.id !== item.id);
         return [historyItem, ...filtered].slice(0, 20);
       });

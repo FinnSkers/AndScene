@@ -67,6 +67,12 @@
   scrollbar-width: none;
 }
 
+/* Edge fade / peek effect */
+.content-row__scroll--masked {
+  -webkit-mask-image: linear-gradient(to right, transparent, black 3%, black 97%, transparent);
+  mask-image: linear-gradient(to right, transparent, black 3%, black 97%, transparent);
+}
+
 .content-row__scroll::-webkit-scrollbar {
   display: none;
 }

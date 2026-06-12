@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Info } from 'lucide-react';
+import { Play, Info, Plus, Check, Flame } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { fetchTrending, fetchDetails } from '../services/tmdb';
@@ -14,13 +14,19 @@ const contentVariants = {
   center: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.6, ease: 'easeOut' },
+    transition: { duration: 0.6, ease: 'easeOut', staggerChildren: 0.1 },
   },
   exit: {
     opacity: 0,
     y: -20,
     transition: { duration: 0.4, ease: 'easeIn' },
   },
+};
+
+const childVariants = {
+  enter: { opacity: 0, y: 15 },
+  center: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
+  exit: { opacity: 0, transition: { duration: 0.3 } },
 };
 
 const backdropVariants = {
@@ -33,7 +39,9 @@ export default function Hero() {
   const [featured, setFeatured] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const intervalRef = useRef(null);
-  const { openModal } = useApp();
+  const heroRef = useRef(null);
+  const [mousePos, setMousePos] = useState({ x: 0.5, y: 0.5 });
+  const { openModal, myList, toggleMyList } = useApp();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -91,10 +99,25 @@ export default function Hero() {
     resetTimer();
   };
 
+  /* Parallax on mouse move */
+  const handleMouseMove = useCallback((e) => {
+    if (!heroRef.current) return;
+    const rect = heroRef.current.getBoundingClientRect();
+    setMousePos({
+      x: (e.clientX - rect.left) / rect.width,
+      y: (e.clientY - rect.top) / rect.height,
+    });
+  }, []);
+
+  const isInList = currentItem && myList.some(item => item.id === currentItem.id);
+
   if (!featured.length || !currentItem) return <section className="hero" style={{ background: '#141414' }}></section>;
 
+  const parallaxX = (mousePos.x - 0.5) * -15;
+  const parallaxY = (mousePos.y - 0.5) * -10;
+
   return (
-    <section className="hero">
+    <section className="hero" ref={heroRef} onMouseMove={handleMouseMove}>
       <AnimatePresence mode="wait">
         <motion.div
           key={`backdrop-${currentItem.id}`}
@@ -103,6 +126,9 @@ export default function Hero() {
           initial="enter"
           animate="center"
           exit="exit"
+          style={{
+            transform: `translate(${parallaxX}px, ${parallaxY}px) scale(1.05)`,
+          }}
         >
           <img
             src={currentItem.backdrop}
@@ -115,6 +141,8 @@ export default function Hero() {
 
       <div className="hero__gradient-bottom" />
       <div className="hero__gradient-left" />
+      {/* Vignette edges */}
+      <div className="hero__vignette" />
 
       <AnimatePresence mode="wait">
         <motion.div
@@ -125,7 +153,13 @@ export default function Hero() {
           animate="center"
           exit="exit"
         >
-          <div className="hero__meta">
+          {/* Trending badge */}
+          <motion.div variants={childVariants} className="hero__trending-badge">
+            <Flame size={14} />
+            <span>#{activeIndex + 1} Trending Today</span>
+          </motion.div>
+
+          <motion.div variants={childVariants} className="hero__meta">
             {currentItem.match && (
               <span className="match-score">{currentItem.match}% Match</span>
             )}
@@ -137,15 +171,29 @@ export default function Hero() {
             {currentItem.rating && (
               <span className="maturity-badge">{currentItem.rating}</span>
             )}
-          </div>
+            {currentItem.type === 'series' && currentItem.seasons && (
+              <span className="hero__seasons-badge">
+                {currentItem.seasons} Season{currentItem.seasons !== 1 ? 's' : ''}
+              </span>
+            )}
+            {currentItem.duration && currentItem.type !== 'series' && (
+              <span style={{ color: 'var(--text-tertiary)', fontSize: 'var(--text-xs)' }}>
+                {currentItem.duration}
+              </span>
+            )}
+          </motion.div>
 
-          <h1 className="hero__title">{currentItem.title}</h1>
+          <motion.h1 variants={childVariants} className="hero__title shimmer-text">
+            {currentItem.title}
+          </motion.h1>
 
           {currentItem.description && (
-            <p className="hero__description">{currentItem.description}</p>
+            <motion.p variants={childVariants} className="hero__description">
+              {currentItem.description}
+            </motion.p>
           )}
 
-          <div className="hero__actions">
+          <motion.div variants={childVariants} className="hero__actions">
             <button 
               className="btn btn-primary"
               onClick={() => navigate(`/watch/${currentItem.type}/${currentItem.id}`)}
@@ -160,7 +208,23 @@ export default function Hero() {
               <Info size={22} />
               More Info
             </button>
-          </div>
+            <button
+              className="btn-icon"
+              onClick={() => toggleMyList(currentItem)}
+              title={isInList ? 'Remove from My List' : 'Add to My List'}
+            >
+              {isInList ? <Check size={20} /> : <Plus size={20} />}
+            </button>
+          </motion.div>
+
+          {/* Genre tags */}
+          {currentItem.genre && currentItem.genre.length > 0 && (
+            <motion.div variants={childVariants} className="hero__genres">
+              {currentItem.genre.slice(0, 4).map((g, i) => (
+                <span key={i} className="hero__genre-tag">{g}</span>
+              ))}
+            </motion.div>
+          )}
         </motion.div>
       </AnimatePresence>
 

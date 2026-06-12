@@ -227,6 +227,12 @@
   overflow: hidden;
   border: 1px solid var(--border-subtle);
   background: var(--bg-secondary);
+  transition: all var(--transition-base);
+}
+
+.quick-pick-item:hover .quick-pick-poster-wrap {
+  border-color: var(--border-accent);
+  box-shadow: 0 0 10px var(--accent-glow);
 }
 
 .quick-pick-poster-wrap img {
@@ -437,15 +443,17 @@
   align-items: center;
   gap: var(--space-md);
   padding: var(--space-md);
-  background: var(--bg-secondary);
+  background: rgba(255, 255, 255, 0.02);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   transition: all var(--transition-base);
 }
 
 .public-party-item:hover {
-  border-color: var(--border-medium);
-  background: var(--bg-glass-light);
+  border-color: var(--border-accent);
+  background: rgba(255, 255, 255, 0.06);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
 .public-party-item img {
@@ -454,6 +462,11 @@
   object-fit: cover;
   border-radius: var(--radius-sm);
   background: var(--bg-secondary);
+  transition: transform var(--transition-base);
+}
+
+.public-party-item:hover img {
+  transform: scale(1.05);
 }
 
 .party-item-info {

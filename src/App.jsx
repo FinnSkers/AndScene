@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Loader2, ShieldAlert } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { AppProvider } from './context/AppContext';
 import { supabase } from './services/supabaseClient';
 import Landing from './pages/Landing';
@@ -11,12 +12,59 @@ import Browse from './pages/Browse';
 import Anime from './pages/Anime';
 import Watch from './pages/Watch';
 import WatchParty from './pages/WatchParty';
+import Stats from './pages/Stats';
 import Admin from './pages/Admin';
 import Signup from './pages/Signup';
 import ContinueWatchingWidget from './components/ContinueWatchingWidget';
 import TMDBSettingsModal from './components/TMDBSettingsModal';
 import RequireAdmin from './components/RequireAdmin';
 import UserManagement from './pages/UserManagement';
+import LoadingBar from './components/LoadingBar';
+import './App.css';
+
+function AppContent() {
+  const location = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [location.pathname]);
+
+  return (
+    <>
+      <LoadingBar />
+      <ContinueWatchingWidget />
+      <TMDBSettingsModal />
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={location.pathname}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.25, ease: 'easeInOut' }}
+          style={{ minHeight: '100vh', width: '100%' }}
+        >
+          <Routes location={location}>
+            <Route path="/" element={<Home />} />
+            <Route path="/landing" element={<Landing />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/profiles" element={<ProfileSelect />} />
+            <Route path="/home" element={<Navigate to="/" replace />} />
+            <Route path="/browse" element={<Browse />} />
+            <Route path="/anime" element={<Anime />} />
+            <Route path="/watch-party" element={<WatchParty />} />
+            <Route path="/stats" element={<Stats />} />
+            <Route path="/watch/:type/:id" element={<Watch />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="/admin/users" element={<RequireAdmin><UserManagement /></RequireAdmin>} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </motion.div>
+      </AnimatePresence>
+    </>
+  );
+}
+
 function App() {
   const [isMaintenance, setIsMaintenance] = useState(false);
   const [maintenanceEta, setMaintenanceEta] = useState('');
@@ -101,23 +149,7 @@ function App() {
   return (
     <AppProvider>
       <BrowserRouter>
-        <ContinueWatchingWidget />
-        <TMDBSettingsModal />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/landing" element={<Landing />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/profiles" element={<ProfileSelect />} />
-          <Route path="/home" element={<Navigate to="/" replace />} />
-          <Route path="/browse" element={<Browse />} />
-          <Route path="/anime" element={<Anime />} />
-          <Route path="/watch-party" element={<WatchParty />} />
-          <Route path="/watch/:type/:id" element={<Watch />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/admin/users" element={<RequireAdmin><UserManagement /></RequireAdmin>} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <AppContent />
       </BrowserRouter>
     </AppProvider>
   );
