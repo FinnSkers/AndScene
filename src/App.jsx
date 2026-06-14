@@ -13,6 +13,7 @@ import Anime from './pages/Anime';
 import Watch from './pages/Watch';
 import WatchParty from './pages/WatchParty';
 import Stats from './pages/Stats';
+import Status from './pages/Status';
 import Admin from './pages/Admin';
 import Signup from './pages/Signup';
 import ContinueWatchingWidget from './components/ContinueWatchingWidget';
@@ -54,6 +55,7 @@ function AppContent() {
             <Route path="/anime" element={<Anime />} />
             <Route path="/watch-party" element={<WatchParty />} />
             <Route path="/stats" element={<Stats />} />
+            <Route path="/status" element={<Status />} />
             <Route path="/watch/:type/:id" element={<Watch />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/admin/users" element={<RequireAdmin><UserManagement /></RequireAdmin>} />

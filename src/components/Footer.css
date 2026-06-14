@@ -96,11 +96,85 @@
 }
 
 .footer__copy {
-  grid-column: 1 / -1;
-  text-align: center;
   color: var(--text-tertiary);
   font-size: var(--text-xs);
+  margin: 0;
+}
+
+.footer__bottom {
+  grid-column: 1 / -1;
+  border-top: var(--border-width) solid var(--border-color);
   margin-top: var(--space-xl);
+  padding-top: var(--space-md);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.footer__status-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-decoration: none;
+  transition: all var(--transition-base);
+}
+
+.footer__status-btn.status-operational {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: #10B981;
+}
+.footer__status-btn.status-operational:hover {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.35);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.15);
+}
+.footer__status-btn.status-operational .footer__status-dot {
+  background: #10B981;
+  box-shadow: 0 0 6px #10B981;
+}
+
+.footer__status-btn.status-degraded {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  color: #F59E0B;
+}
+.footer__status-btn.status-degraded:hover {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.35);
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.15);
+}
+.footer__status-btn.status-degraded .footer__status-dot {
+  background: #F59E0B;
+  box-shadow: 0 0 6px #F59E0B;
+}
+
+.footer__status-btn.status-offline {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #EF4444;
+}
+.footer__status-btn.status-offline:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.35);
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.15);
+}
+.footer__status-btn.status-offline .footer__status-dot {
+  background: #EF4444;
+  box-shadow: 0 0 6px #EF4444;
+}
+
+.footer__status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  animation: blink 2s infinite;
 }
 
 @media (max-width: 768px) {
@@ -109,5 +183,9 @@
   }
   .footer__links {
     grid-template-columns: 1fr;
+  }
+  .footer__bottom {
+    flex-direction: column;
+    text-align: center;
   }
 }

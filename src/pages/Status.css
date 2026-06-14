@@ -1,0 +1,322 @@
+.status-page {
+  min-height: 100vh;
+  padding: 120px 24px 60px;
+  background: transparent;
+  color: #F0F0F5;
+  font-family: 'Space Grotesk', sans-serif;
+  position: relative;
+  z-index: 1;
+}
+
+.status-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.status-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.status-header h1 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, #FFF 0%, #9CA3B0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.status-subtitle {
+  color: #9CA3B0;
+  font-size: 1.1rem;
+}
+
+/* Overall Status Banner */
+.overall-status-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 32px;
+  border-radius: 16px;
+  margin-bottom: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.3s ease;
+}
+
+.overall-status-banner.all-good {
+  background: rgba(16, 185, 129, 0.06);
+  border-color: rgba(16, 185, 129, 0.2);
+  box-shadow: 0 0 30px rgba(16, 185, 129, 0.05);
+}
+
+.overall-status-banner.partial-issue {
+  background: rgba(245, 158, 11, 0.06);
+  border-color: rgba(245, 158, 11, 0.2);
+  box-shadow: 0 0 30px rgba(245, 158, 11, 0.05);
+}
+
+.overall-status-banner.all-down {
+  background: rgba(239, 68, 68, 0.06);
+  border-color: rgba(239, 68, 68, 0.2);
+  box-shadow: 0 0 30px rgba(239, 68, 68, 0.05);
+}
+
+.overall-info h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.overall-info p {
+  color: #9CA3B0;
+  font-size: 0.95rem;
+}
+
+/* Services Grid */
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+.service-card {
+  background: rgba(16, 16, 28, 0.55);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  padding: 24px;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.service-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+}
+
+.service-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.service-name-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.service-icon {
+  color: #A78BFA;
+}
+
+.service-card-header h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+/* Status Indicator Dot */
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.dot.pulse {
+  animation: blink 2s infinite;
+}
+
+.status-operational {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10B981;
+}
+.status-operational .dot { background: #10B981; box-shadow: 0 0 8px #10B981; }
+
+.status-degraded {
+  background: rgba(245, 158, 11, 0.1);
+  color: #F59E0B;
+}
+.status-degraded .dot { background: #F59E0B; box-shadow: 0 0 8px #F59E0B; }
+
+.status-offline {
+  background: rgba(239, 68, 68, 0.1);
+  color: #EF4444;
+}
+.status-offline .dot { background: #EF4444; box-shadow: 0 0 8px #EF4444; }
+
+.status-checking {
+  background: rgba(156, 163, 175, 0.1);
+  color: #9CA3B0;
+}
+.status-checking .dot { background: #9CA3B0; box-shadow: 0 0 8px #9CA3B0; }
+
+/* Service Metrics */
+.service-details {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 16px;
+  margin-top: 16px;
+}
+
+.metric-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+
+.metric-row:last-child {
+  margin-bottom: 0;
+}
+
+.metric-label {
+  color: #9CA3B0;
+}
+
+.metric-value {
+  font-weight: 600;
+}
+
+.metric-value.latency {
+  color: #10B981;
+}
+
+/* Diagnostic Console Section */
+.diagnostics-panel {
+  background: rgba(8, 8, 14, 0.65);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 40px;
+}
+
+.diagnostics-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.diagnostics-panel-header h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-diagnostics {
+  background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%);
+  border: none;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: opacity 0.2s ease, transform 0.1s ease;
+}
+
+.btn-diagnostics:hover {
+  opacity: 0.9;
+}
+
+.btn-diagnostics:active {
+  transform: scale(0.98);
+}
+
+.btn-diagnostics:disabled {
+  background: #374151;
+  color: #9CA3B0;
+  cursor: not-allowed;
+}
+
+/* Terminal Screen */
+.terminal-screen {
+  background: #05050A;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 18px;
+  font-family: 'Fira Code', 'Courier New', Courier, monospace;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #34D399; /* Green text */
+  max-height: 250px;
+  overflow-y: auto;
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+}
+
+.terminal-line {
+  margin-bottom: 4px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.terminal-line.info { color: #60A5FA; }
+.terminal-line.success { color: #34D399; }
+.terminal-line.warning { color: #FBBF24; }
+.terminal-line.error { color: #F87171; }
+.terminal-line.input { color: #F3F4F6; }
+
+/* Back Button */
+.status-back {
+  display: flex;
+  justify-content: center;
+  margin-top: 32px;
+}
+
+.btn-back {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #F0F0F5;
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.btn-back:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Keyframes */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+@media (max-width: 640px) {
+  .status-page {
+    padding: 100px 16px 40px;
+  }
+  
+  .overall-status-banner {
+    flex-direction: column;
+    text-align: center;
+    gap: 16px;
+    padding: 20px;
+  }
+}

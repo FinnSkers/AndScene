@@ -1,3 +1,6 @@
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { supabase } from '../services/supabaseClient';
 import './Footer.css';
 
 /* Inline SVG social icons for brand accuracy */
@@ -47,6 +50,24 @@ const FOOTER_LINKS = [
 ];
 
 export default function Footer() {
+  const [systemStatus, setSystemStatus] = useState('operational');
+
+  useEffect(() => {
+    const checkStatus = async () => {
+      try {
+        const { error } = await supabase.from('system_config').select('key').limit(1);
+        if (error) {
+          setSystemStatus('degraded');
+        } else {
+          setSystemStatus('operational');
+        }
+      } catch {
+        setSystemStatus('offline');
+      }
+    };
+    checkStatus();
+  }, []);
+
   return (
     <footer className="footer glass modern-glass">
       <div className="container footer__content">
@@ -94,7 +115,14 @@ export default function Footer() {
           <button className="footer__btn">Subscribe</button>
         </div>
       </div>
-      <p className="footer__copy">&copy; 2026 AndScene! &ndash; All rights reserved.</p>
+      
+      <div className="footer__bottom">
+        <p className="footer__copy">&copy; 2026 AndScene! &ndash; All rights reserved.</p>
+        <Link to="/status" className={`footer__status-btn status-${systemStatus}`}>
+          <span className="footer__status-dot"></span>
+          System Status: {systemStatus === 'operational' ? 'Operational' : systemStatus === 'degraded' ? 'Degraded' : 'Offline'}
+        </Link>
+      </div>
     </footer>
   );
 }
