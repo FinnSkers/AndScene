@@ -78,13 +78,17 @@ export default function Status() {
     return () => clearInterval(timer);
   }, []);
 
+  const isDiagnosingRef = useRef(false);
+  const hasRunInitialCheck = useRef(false);
+
   const addConsoleLine = useCallback((text, type = 'info') => {
     const timestamp = new Date().toLocaleTimeString();
     setConsoleLines(prev => [...prev, { timestamp, text, type }]);
   }, []);
 
   const runDiagnostics = useCallback(async () => {
-    if (isDiagnosing) return;
+    if (isDiagnosingRef.current) return;
+    isDiagnosingRef.current = true;
     setIsDiagnosing(true);
     setConsoleLines([]);
     addConsoleLine('Initializing system diagnostics...', 'input');
@@ -94,264 +98,251 @@ export default function Status() {
       setTimeout(() => reject(new Error(`Connection timed out after ${ms}ms`)), ms)
     );
 
-    // ----------------------------------------------------
-    // 1. SUPABASE DIAGNOSTIC & TABLES CHECK
-    // ----------------------------------------------------
-    setSupabaseStatus('checking');
-    setDbTables({
-      profiles: { status: 'checking', count: null },
-      watchlist: { status: 'checking', count: null },
-      continue_watching: { status: 'checking', count: null },
-      watch_parties: { status: 'checking', count: null },
-      system_config: { status: 'checking', count: null }
-    });
-    addConsoleLine('Connecting to Supabase Database API...', 'info');
-    
     try {
-      const start = performance.now();
-      const queryPromise = supabase.from('system_config').select('key').limit(1);
-      const { error } = await Promise.race([queryPromise, createTimeout(5000)]);
-      const latency = Math.round(performance.now() - start);
-      
-      setSupabaseLatency(latency);
-      setSupabaseHistory(prev => [...prev.slice(1), latency]);
-
-      if (error) {
-        setSupabaseStatus('degraded');
-        setSupabaseDetails(`Connected with warning: ${error.message}`);
-        addConsoleLine(`⚠️ Supabase connection warning: ${error.message} (latency: ${latency}ms)`, 'warning');
-      } else {
-        setSupabaseStatus('operational');
-        setSupabaseDetails('All database connections fully operational.');
-        addConsoleLine(`✅ Supabase Database is queryable. Connection active (latency: ${latency}ms)`, 'success');
-      }
-
-      // Query Table Counts in Parallel
-      addConsoleLine('Checking schema health & active row counts...', 'info');
-      const tables = ['profiles', 'watchlist', 'continue_watching', 'watch_parties', 'system_config'];
-      
-      await Promise.all(tables.map(async (table) => {
-        try {
-          const fetchPromise = supabase.from(table).select('*', { count: 'exact', head: true });
-          const { count, error: tableErr } = await Promise.race([fetchPromise, createTimeout(4000)]);
-          if (tableErr) throw tableErr;
-          
-          setDbTables(prev => ({
-            ...prev,
-            [table]: { status: 'operational', count: count ?? 0 }
-          }));
-          addConsoleLine(`  - Table [${table}] operational. Count: ${count ?? 0}`, 'success');
-        } catch (err) {
-          setDbTables(prev => ({
-            ...prev,
-            [table]: { status: 'error', count: null, message: err.message }
-          }));
-          addConsoleLine(`  - ❌ Table [${table}] error: ${err.message}`, 'error');
-        }
-      }));
-
-    } catch (err) {
-      setSupabaseStatus('offline');
-      setSupabaseLatency(null);
-      setSupabaseHistory(prev => [...prev.slice(1), 0]);
-      setSupabaseDetails(`Database connection failed: ${err.message}`);
-      addConsoleLine(`❌ Supabase Database check failed: ${err.message}`, 'error');
+      // ----------------------------------------------------
+      // 1. SUPABASE DIAGNOSTIC & TABLES CHECK
+      // ----------------------------------------------------
+      setSupabaseStatus('checking');
       setDbTables({
-        profiles: { status: 'error', count: null },
-        watchlist: { status: 'error', count: null },
-        continue_watching: { status: 'error', count: null },
-        watch_parties: { status: 'error', count: null },
-        system_config: { status: 'error', count: null }
+        profiles: { status: 'checking', count: null },
+        watchlist: { status: 'checking', count: null },
+        continue_watching: { status: 'checking', count: null },
+        watch_parties: { status: 'checking', count: null },
+        system_config: { status: 'checking', count: null }
       });
-    }
-
-    // ----------------------------------------------------
-    // 2. TMDB CATALOG API & ENDPOINTS DIAGNOSTIC
-    // ----------------------------------------------------
-    setTmdbStatus('checking');
-    setTmdbEndpoints({ trending: 'checking', upcoming: 'checking', genres: 'checking' });
-    
-    if (customTmdbKey) {
-      addConsoleLine('Pinging TMDB Catalog Metadata API using custom personal key...', 'info');
-    } else {
-      addConsoleLine('Pinging TMDB Catalog Metadata API using default global key...', 'info');
-    }
-
-    try {
-      const start = performance.now();
-      const movies = await Promise.race([fetchTrending(1), createTimeout(5000)]);
-      const latency = Math.round(performance.now() - start);
+      addConsoleLine('Connecting to Supabase Database API...', 'info');
       
-      setTmdbLatency(latency);
-      setTmdbHistory(prev => [...prev.slice(1), latency]);
-
-      if (movies && movies.length > 0) {
-        setTmdbStatus('operational');
-        setTmdbDetails('Metadata searches and trending feeds active.');
-        addConsoleLine(`✅ TMDB API responded successfully. Loaded ${movies.length} items (latency: ${latency}ms)`, 'success');
-      } else {
-        setTmdbStatus('degraded');
-        setTmdbDetails('API responded with empty metadata results.');
-        addConsoleLine(`⚠️ TMDB API responded, but returned empty catalog rows (latency: ${latency}ms)`, 'warning');
-      }
-
-      // Check sub-endpoints in parallel
-      addConsoleLine('Checking catalog sub-endpoints...', 'info');
-      
-      // Check Trending
       try {
-        await Promise.race([fetchTrending(1), createTimeout(4000)]);
-        setTmdbEndpoints(prev => ({ ...prev, trending: 'ok' }));
-        addConsoleLine('  - Endpoint [/trending/all/day] operational.', 'success');
-      } catch {
-        setTmdbEndpoints(prev => ({ ...prev, trending: 'error' }));
-        addConsoleLine('  - ❌ Endpoint [/trending/all/day] failed.', 'error');
-      }
+        const start = performance.now();
+        const queryPromise = supabase.from('system_config').select('key').limit(1);
+        const { error } = await Promise.race([queryPromise, createTimeout(5000)]);
+        const latency = Math.round(performance.now() - start);
+        
+        setSupabaseLatency(latency);
+        setSupabaseHistory(prev => [...prev.slice(1), latency]);
 
-      // Check Upcoming
-      try {
-        await Promise.race([fetchUpcoming(1), createTimeout(4000)]);
-        setTmdbEndpoints(prev => ({ ...prev, upcoming: 'ok' }));
-        addConsoleLine('  - Endpoint [/movie/upcoming] operational.', 'success');
-      } catch {
-        setTmdbEndpoints(prev => ({ ...prev, upcoming: 'error' }));
-        addConsoleLine('  - ❌ Endpoint [/movie/upcoming] failed.', 'error');
-      }
-
-      // Check Genres
-      try {
-        await Promise.race([getMovieGenres(), createTimeout(4000)]);
-        setTmdbEndpoints(prev => ({ ...prev, genres: 'ok' }));
-        addConsoleLine('  - Endpoint [/genre/movie/list] operational.', 'success');
-      } catch {
-        setTmdbEndpoints(prev => ({ ...prev, genres: 'error' }));
-        addConsoleLine('  - ❌ Endpoint [/genre/movie/list] failed.', 'error');
-      }
-
-    } catch (err) {
-      setTmdbStatus('offline');
-      setTmdbLatency(null);
-      setTmdbHistory(prev => [...prev.slice(1), 0]);
-      setTmdbDetails(`Catalog API failed: ${err.message}`);
-      addConsoleLine(`❌ TMDB API connection failed: ${err.message}`, 'error');
-      setTmdbEndpoints({ trending: 'error', upcoming: 'error', genres: 'error' });
-    }
-
-    // ----------------------------------------------------
-    // 3. CUSTOM SCRAPER SERVER DIAGNOSTIC
-    // ----------------------------------------------------
-    setScraperStatus('checking');
-    setScraperEndpoints({ base: 'checking', movies: 'checking', tv: 'checking' });
-    
-    let customServerUrl = localStorage.getItem('user_cinepro_server_url') || 'http://localhost:3001';
-    customServerUrl = customServerUrl.trim();
-    if (customServerUrl && !/^https?:\/\//i.test(customServerUrl)) {
-      customServerUrl = 'http://' + customServerUrl;
-    }
-    
-    addConsoleLine(`Checking Custom Scraper Server at ${customServerUrl}...`, 'info');
-    
-    try {
-      const start = performance.now();
-      const baseController = new AbortController();
-      const baseTimeout = setTimeout(() => baseController.abort(), 4000);
-      
-      const response = await fetch(customServerUrl, {
-        method: 'GET',
-        headers: { 'Accept': 'application/json' },
-        signal: baseController.signal
-      });
-      clearTimeout(baseTimeout);
-      const latency = Math.round(performance.now() - start);
-      
-      setScraperLatency(latency);
-      setScraperHistory(prev => [...prev.slice(1), latency]);
-
-      if (response.ok) {
-        const body = await response.json();
-        setScraperStatus('operational');
-        setScraperDetails(`Running on port 3001. Resolve routes online.`);
-        addConsoleLine(`✅ Scraper Server responded. Message: "${body.message}" (latency: ${latency}ms)`, 'success');
-        setScraperEndpoints(prev => ({ ...prev, base: 'ok' }));
-      } else {
-        setScraperStatus('degraded');
-        setScraperDetails(`Server returned bad status: ${response.status}`);
-        addConsoleLine(`⚠️ Scraper Server returned non-200 HTTP code: ${response.status} (latency: ${latency}ms)`, 'warning');
-        setScraperEndpoints(prev => ({ ...prev, base: 'error' }));
-      }
-
-      // Check stream resolvers
-      addConsoleLine('Checking stream resolver endpoints (Movie / TV)...', 'info');
-      
-      // Check movie resolver (Fight Club dummy check - ID 550)
-      try {
-        const mController = new AbortController();
-        const mTimeout = setTimeout(() => mController.abort(), 4000);
-        const mRes = await fetch(`${customServerUrl}/v1/movies/550`, { signal: mController.signal });
-        clearTimeout(mTimeout);
-        if (mRes.ok) {
-          setScraperEndpoints(prev => ({ ...prev, movies: 'ok' }));
-          addConsoleLine('  - Endpoint [/v1/movies/:id] resolved successfully.', 'success');
+        if (error) {
+          setSupabaseStatus('degraded');
+          setSupabaseDetails(`Connected with warning: ${error.message}`);
+          addConsoleLine(`⚠️ Supabase connection warning: ${error.message} (latency: ${latency}ms)`, 'warning');
         } else {
-          throw new Error(`Bad status ${mRes.status}`);
+          setSupabaseStatus('operational');
+          setSupabaseDetails('All database connections fully operational.');
+          addConsoleLine(`✅ Supabase Database is queryable. Connection active (latency: ${latency}ms)`, 'success');
         }
-      } catch (e) {
-        setScraperEndpoints(prev => ({ ...prev, movies: 'error' }));
-        addConsoleLine(`  - ❌ Endpoint [/v1/movies/:id] failed resolver check: ${e.message}`, 'warning');
+
+        // Query Table Counts in Parallel
+        addConsoleLine('Checking schema health & active row counts...', 'info');
+        const tables = ['profiles', 'watchlist', 'continue_watching', 'watch_parties', 'system_config'];
+        
+        await Promise.all(tables.map(async (table) => {
+          try {
+            const fetchPromise = supabase.from(table).select('*', { count: 'exact', head: true });
+            const { count, error: tableErr } = await Promise.race([fetchPromise, createTimeout(4000)]);
+            if (tableErr) throw tableErr;
+            
+            setDbTables(prev => ({
+              ...prev,
+              [table]: { status: 'operational', count: count ?? 0 }
+            }));
+            addConsoleLine(`  - Table [${table}] operational. Count: ${count ?? 0}`, 'success');
+          } catch (err) {
+            setDbTables(prev => ({
+              ...prev,
+              [table]: { status: 'error', count: null, message: err.message }
+            }));
+            addConsoleLine(`  - ❌ Table [${table}] error: ${err.message}`, 'error');
+          }
+        }));
+
+      } catch (err) {
+        setSupabaseStatus('offline');
+        setSupabaseLatency(null);
+        setSupabaseHistory(prev => [...prev.slice(1), 0]);
+        setSupabaseDetails(`Database connection failed: ${err.message}`);
+        addConsoleLine(`❌ Supabase Database check failed: ${err.message}`, 'error');
+        setDbTables({
+          profiles: { status: 'error', count: null },
+          watchlist: { status: 'error', count: null },
+          continue_watching: { status: 'error', count: null },
+          watch_parties: { status: 'error', count: null },
+          system_config: { status: 'error', count: null }
+        });
       }
 
-      // Check TV resolver (The Flash dummy check - ID 60735)
+      // ----------------------------------------------------
+      // 2. TMDB CATALOG API & ENDPOINTS DIAGNOSTIC
+      // ----------------------------------------------------
+      setTmdbStatus('checking');
+      setTmdbEndpoints({ trending: 'checking', upcoming: 'checking', genres: 'checking' });
+      
+      if (customTmdbKey) {
+        addConsoleLine('Pinging TMDB Catalog Metadata API using custom personal key...', 'info');
+      } else {
+        addConsoleLine('Pinging TMDB Catalog Metadata API using default global key...', 'info');
+      }
+
       try {
-        const tController = new AbortController();
-        const tTimeout = setTimeout(() => tController.abort(), 4000);
-        const tRes = await fetch(`${customServerUrl}/v1/tv/60735/seasons/1/episodes/1`, { signal: tController.signal });
-        clearTimeout(tTimeout);
-        if (tRes.ok) {
-          setScraperEndpoints(prev => ({ ...prev, tv: 'ok' }));
-          addConsoleLine('  - Endpoint [/v1/tv/:id/seasons/.../episodes/...] resolved successfully.', 'success');
+        const start = performance.now();
+        const movies = await Promise.race([fetchTrending(1), createTimeout(5000)]);
+        const latency = Math.round(performance.now() - start);
+        
+        setTmdbLatency(latency);
+        setTmdbHistory(prev => [...prev.slice(1), latency]);
+
+        if (movies && movies.length > 0) {
+          setTmdbStatus('operational');
+          setTmdbDetails('Metadata searches and trending feeds active.');
+          addConsoleLine(`✅ TMDB API responded successfully. Loaded ${movies.length} items (latency: ${latency}ms)`, 'success');
         } else {
-          throw new Error(`Bad status ${tRes.status}`);
+          setTmdbStatus('degraded');
+          setTmdbDetails('API responded with empty metadata results.');
+          addConsoleLine(`⚠️ TMDB API responded, but returned empty catalog rows (latency: ${latency}ms)`, 'warning');
         }
-      } catch (e) {
-        setScraperEndpoints(prev => ({ ...prev, tv: 'error' }));
-        addConsoleLine(`  - ❌ Endpoint [/v1/tv/:id/seasons/.../episodes/...] failed resolver check: ${e.message}`, 'warning');
+
+        // Check sub-endpoints in parallel
+        addConsoleLine('Checking catalog sub-endpoints...', 'info');
+        
+        // Check Trending
+        try {
+          await Promise.race([fetchTrending(1), createTimeout(4000)]);
+          setTmdbEndpoints(prev => ({ ...prev, trending: 'ok' }));
+          addConsoleLine('  - Endpoint [/trending/all/day] operational.', 'success');
+        } catch {
+          setTmdbEndpoints(prev => ({ ...prev, trending: 'error' }));
+          addConsoleLine('  - ❌ Endpoint [/trending/all/day] failed.', 'error');
+        }
+
+        // Check Upcoming
+        try {
+          await Promise.race([fetchUpcoming(1), createTimeout(4000)]);
+          setTmdbEndpoints(prev => ({ ...prev, upcoming: 'ok' }));
+          addConsoleLine('  - Endpoint [/movie/upcoming] operational.', 'success');
+        } catch {
+          setTmdbEndpoints(prev => ({ ...prev, upcoming: 'error' }));
+          addConsoleLine('  - ❌ Endpoint [/movie/upcoming] failed.', 'error');
+        }
+
+        // Check Genres
+        try {
+          await Promise.race([getMovieGenres(), createTimeout(4000)]);
+          setTmdbEndpoints(prev => ({ ...prev, genres: 'ok' }));
+          addConsoleLine('  - Endpoint [/genre/movie/list] operational.', 'success');
+        } catch {
+          setTmdbEndpoints(prev => ({ ...prev, genres: 'error' }));
+          addConsoleLine('  - ❌ Endpoint [/genre/movie/list] failed.', 'error');
+        }
+
+      } catch (err) {
+        setTmdbStatus('offline');
+        setTmdbLatency(null);
+        setTmdbHistory(prev => [...prev.slice(1), 0]);
+        setTmdbDetails(`Catalog API failed: ${err.message}`);
+        addConsoleLine(`❌ TMDB API connection failed: ${err.message}`, 'error');
+        setTmdbEndpoints({ trending: 'error', upcoming: 'error', genres: 'error' });
       }
 
-    } catch (err) {
-      setScraperStatus('offline');
-      setScraperLatency(null);
-      setScraperHistory(prev => [...prev.slice(1), 0]);
-      const errorMsg = err.name === 'AbortError' ? 'Request timed out after 4000ms' : err.message;
-      setScraperDetails('Local scraper client unreachable. Ensure port is active.');
-      addConsoleLine(`❌ Scraper Server unreachable: ${errorMsg}. Ensure your local server is running.`, 'error');
-      setScraperEndpoints({ base: 'error', movies: 'error', tv: 'error' });
-    }
+      // ----------------------------------------------------
+      // 3. CUSTOM SCRAPER SERVER DIAGNOSTIC
+      // ----------------------------------------------------
+      setScraperStatus('checking');
+      setScraperEndpoints({ base: 'checking', movies: 'checking', tv: 'checking' });
+      
+      let customServerUrl = localStorage.getItem('user_cinepro_server_url') || 'http://localhost:3001';
+      customServerUrl = customServerUrl.trim();
+      if (customServerUrl && !/^https?:\/\//i.test(customServerUrl)) {
+        customServerUrl = 'http://' + customServerUrl;
+      }
+      
+      addConsoleLine(`Checking Custom Scraper Server at ${customServerUrl}...`, 'info');
+      
+      try {
+        const start = performance.now();
+        const baseController = new AbortController();
+        const baseTimeout = setTimeout(() => baseController.abort(), 4000);
+        
+        const response = await fetch(customServerUrl, {
+          method: 'GET',
+          headers: { 'Accept': 'application/json' },
+          signal: baseController.signal
+        });
+        clearTimeout(baseTimeout);
+        const latency = Math.round(performance.now() - start);
+        
+        setScraperLatency(latency);
+        setScraperHistory(prev => [...prev.slice(1), latency]);
 
-    addConsoleLine('System diagnostic process completed.', 'input');
-    setIsDiagnosing(false);
-  }, [addConsoleLine, isDiagnosing, customTmdbKey]);
+        if (response.ok) {
+          const body = await response.json();
+          setScraperStatus('operational');
+          setScraperDetails(`Running on port 3001. Resolve routes online.`);
+          addConsoleLine(`✅ Scraper Server responded. Message: "${body.message}" (latency: ${latency}ms)`, 'success');
+          setScraperEndpoints(prev => ({ ...prev, base: 'ok' }));
+        } else {
+          setScraperStatus('degraded');
+          setScraperDetails(`Server returned bad status: ${response.status}`);
+          addConsoleLine(`⚠️ Scraper Server returned non-200 HTTP code: ${response.status} (latency: ${latency}ms)`, 'warning');
+          setScraperEndpoints(prev => ({ ...prev, base: 'error' }));
+        }
+
+        // Check stream resolvers
+        addConsoleLine('Checking stream resolver endpoints (Movie / TV)...', 'info');
+        
+        // Check movie resolver (Fight Club dummy check - ID 550)
+        try {
+          const mController = new AbortController();
+          const mTimeout = setTimeout(() => mController.abort(), 4000);
+          const mRes = await fetch(`${customServerUrl}/v1/movies/550`, { signal: mController.signal });
+          clearTimeout(mTimeout);
+          if (mRes.ok) {
+            setScraperEndpoints(prev => ({ ...prev, movies: 'ok' }));
+            addConsoleLine('  - Endpoint [/v1/movies/:id] resolved successfully.', 'success');
+          } else {
+            throw new Error(`Bad status ${mRes.status}`);
+          }
+        } catch (e) {
+          setScraperEndpoints(prev => ({ ...prev, movies: 'error' }));
+          addConsoleLine(`  - ❌ Endpoint [/v1/movies/:id] failed resolver check: ${e.message}`, 'warning');
+        }
+
+        // Check TV resolver (The Flash dummy check - ID 60735)
+        try {
+          const tController = new AbortController();
+          const tTimeout = setTimeout(() => tController.abort(), 4000);
+          const tRes = await fetch(`${customServerUrl}/v1/tv/60735/seasons/1/episodes/1`, { signal: tController.signal });
+          clearTimeout(tTimeout);
+          if (tRes.ok) {
+            setScraperEndpoints(prev => ({ ...prev, tv: 'ok' }));
+            addConsoleLine('  - Endpoint [/v1/tv/:id/seasons/.../episodes/...] resolved successfully.', 'success');
+          } else {
+            throw new Error(`Bad status ${tRes.status}`);
+          }
+        } catch (e) {
+          setScraperEndpoints(prev => ({ ...prev, tv: 'error' }));
+          addConsoleLine(`  - ❌ Endpoint [/v1/tv/:id/seasons/.../episodes/...] failed resolver check: ${e.message}`, 'warning');
+        }
+
+      } catch (err) {
+        setScraperStatus('offline');
+        setScraperLatency(null);
+        setScraperHistory(prev => [...prev.slice(1), 0]);
+        const errorMsg = err.name === 'AbortError' ? 'Request timed out after 4000ms' : err.message;
+        setScraperDetails('Local scraper client unreachable. Ensure port is active.');
+        addConsoleLine(`❌ Scraper Server unreachable: ${errorMsg}. Ensure your local server is running.`, 'error');
+        setScraperEndpoints({ base: 'error', movies: 'error', tv: 'error' });
+      }
+    } finally {
+      addConsoleLine('System diagnostic process completed.', 'input');
+      setIsDiagnosing(false);
+      isDiagnosingRef.current = false;
+    }
+  }, [addConsoleLine, customTmdbKey]);
 
   useEffect(() => {
-    runDiagnostics();
-
-    const intervalId = setInterval(() => {
+    if (!hasRunInitialCheck.current) {
+      hasRunInitialCheck.current = true;
       runDiagnostics();
-    }, 45000);
-
-    const handleVisibilityAndFocus = () => {
-      if (document.visibilityState === 'visible') {
-        runDiagnostics();
-      }
-    };
-
-    window.addEventListener('focus', handleVisibilityAndFocus);
-    document.addEventListener('visibilitychange', handleVisibilityAndFocus);
-
-    return () => {
-      clearInterval(intervalId);
-      window.removeEventListener('focus', handleVisibilityAndFocus);
-      document.removeEventListener('visibilitychange', handleVisibilityAndFocus);
-    };
+    }
   }, [runDiagnostics]);
 
   useEffect(() => {
