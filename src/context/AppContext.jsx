@@ -7,7 +7,11 @@ const AppContext = createContext(null);
 
 export function AppProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [activeProfile, setActiveProfile] = useState(null);
+  const [activeProfile, setActiveProfile] = useState(() => {
+    const cached = localStorage.getItem('andscene_active_profile');
+    return cached ? JSON.parse(cached) : null;
+  });
+  const [activeFrame, setActiveFrame] = useState('none');
   const [userProfiles, setUserProfiles] = useState([]);
   const [myList, setMyList] = useState([]);
   const [continueWatching, setContinueWatching] = useState([]);
@@ -18,10 +22,28 @@ export function AppProvider({ children }) {
   const [toast, setToast] = useState(null);
   const [isTMDBSettingsOpen, setIsTMDBSettingsOpen] = useState(false);
 
+  useEffect(() => {
+    if (activeProfile) {
+      localStorage.setItem('andscene_active_profile', JSON.stringify(activeProfile));
+      const savedFrame = localStorage.getItem(`andscene_profile_frame_${activeProfile.id}`) || 'none';
+      setActiveFrame(savedFrame);
+    } else {
+      localStorage.removeItem('andscene_active_profile');
+      setActiveFrame('none');
+    }
+  }, [activeProfile]);
+
   const showToast = useCallback((message) => {
     setToast(message);
     setTimeout(() => setToast(null), 3000);
   }, []);
+
+  const saveProfileFrame = useCallback((frame) => {
+    if (!activeProfile?.id) return;
+    localStorage.setItem(`andscene_profile_frame_${activeProfile.id}`, frame);
+    setActiveFrame(frame);
+    showToast('Avatar frame updated!');
+  }, [activeProfile, showToast]);
 
   // Migrate sandbox user data to database on successful confirmation
   const migrateSandboxData = useCallback(async (sandboxUserId, realUserId) => {
@@ -648,6 +670,8 @@ const login = useCallback(async (email, password) => {
     addToContinueWatching,
     activeProfile,
     setActiveProfile,
+    activeFrame,
+    saveProfileFrame,
     myList,
     addToMyList,
     removeFromMyList,

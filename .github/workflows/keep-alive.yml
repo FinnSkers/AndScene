@@ -1,0 +1,17 @@
+name: Keep Supabase Awake
+
+on:
+  schedule:
+    # Runs at 00:00 UTC (06:00 AM BST) every day
+    - cron: '0 0 * * *'
+  workflow_dispatch: # Allows manual trigger from the Actions tab
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase API
+        run: |
+          curl -i -X GET \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            https://iqgyymwzxujoqnmpayxy.supabase.co/rest/v1/
