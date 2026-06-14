@@ -20,6 +20,8 @@ import { fetchTrending, fetchUpcoming, getMovieGenres } from '../services/tmdb';
 import './Status.css';
 
 export default function Status() {
+  const customTmdbKey = localStorage.getItem('user_tmdb_api_key');
+
   // Service overall state
   const [supabaseStatus, setSupabaseStatus] = useState('checking');
   const [supabaseLatency, setSupabaseLatency] = useState(null);
@@ -169,7 +171,6 @@ export default function Status() {
     setTmdbStatus('checking');
     setTmdbEndpoints({ trending: 'checking', upcoming: 'checking', genres: 'checking' });
     
-    const customTmdbKey = localStorage.getItem('user_tmdb_api_key');
     if (customTmdbKey) {
       addConsoleLine('Pinging TMDB Catalog Metadata API using custom personal key...', 'info');
     } else {
@@ -328,7 +329,7 @@ export default function Status() {
 
     addConsoleLine('System diagnostic process completed.', 'input');
     setIsDiagnosing(false);
-  }, [addConsoleLine, isDiagnosing]);
+  }, [addConsoleLine, isDiagnosing, customTmdbKey]);
 
   useEffect(() => {
     runDiagnostics();
