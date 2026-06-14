@@ -66,7 +66,7 @@ export default function Status() {
   // Terminal diagnostic console
   const [consoleLines, setConsoleLines] = useState([]);
   const [isDiagnosing, setIsDiagnosing] = useState(false);
-  const terminalEndRef = useRef(null);
+  const terminalRef = useRef(null);
 
   // Client System info
   const [systemTime, setSystemTime] = useState(new Date().toLocaleTimeString());
@@ -355,8 +355,8 @@ export default function Status() {
   }, [runDiagnostics]);
 
   useEffect(() => {
-    if (terminalEndRef.current) {
-      terminalEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    if (terminalRef.current) {
+      terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
     }
   }, [consoleLines]);
 
@@ -630,7 +630,7 @@ export default function Status() {
               </h3>
               <span style={{ fontSize: '0.8rem', color: '#9CA3B0' }}>Client-safe diagnostic stream</span>
             </div>
-            <div className="terminal-screen">
+            <div className="terminal-screen" ref={terminalRef}>
               {consoleLines.length === 0 ? (
                 <div className="terminal-line info">Ready to run diagnostics...</div>
               ) : (
@@ -640,7 +640,6 @@ export default function Status() {
                   </div>
                 ))
               )}
-              <div ref={terminalEndRef} />
             </div>
           </div>
 
