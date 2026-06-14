@@ -44,17 +44,20 @@ export default function Status() {
     setConsoleLines([]);
     addConsoleLine('Initializing system diagnostics...', 'input');
 
+    // Create a 5-second timeout promise
+    const createTimeout = (ms = 5000) => new Promise((_, reject) => 
+      setTimeout(() => reject(new Error(`Connection timed out after ${ms}ms`)), ms)
+    );
+
     // ----------------------------------------------------
     // 1. SUPABASE DIAGNOSTIC
     // ----------------------------------------------------
     setSupabaseStatus('checking');
-    addConsoleLine('Connecting to Supabase Database Api...', 'info');
+    addConsoleLine('Connecting to Supabase Database API...', 'info');
     try {
       const start = performance.now();
-      const { data, error } = await supabase
-        .from('system_config')
-        .select('key')
-        .limit(1);
+      const queryPromise = supabase.from('system_config').select('key').limit(1);
+      const { error } = await Promise.race([queryPromise, createTimeout(5000)]);
       
       const latency = Math.round(performance.now() - start);
       setSupabaseLatency(latency);
@@ -78,10 +81,15 @@ export default function Status() {
     // 2. TMDB CATALOG API DIAGNOSTIC
     // ----------------------------------------------------
     setTmdbStatus('checking');
-    addConsoleLine('Pinging TMDB Catalog Metadata API...', 'info');
+    const customTmdbKey = localStorage.getItem('user_tmdb_api_key');
+    if (customTmdbKey) {
+      addConsoleLine('Pinging TMDB Catalog Metadata API using custom personal key...', 'info');
+    } else {
+      addConsoleLine('Pinging TMDB Catalog Metadata API using default global key...', 'info');
+    }
     try {
       const start = performance.now();
-      const movies = await fetchTrending(1);
+      const movies = await Promise.race([fetchTrending(1), createTimeout(5000)]);
       const latency = Math.round(performance.now() - start);
       setTmdbLatency(latency);
 
@@ -104,14 +112,25 @@ export default function Status() {
     // 3. CUSTOM SCRAPER SERVER DIAGNOSTIC
     // ----------------------------------------------------
     setScraperStatus('checking');
-    const customServerUrl = localStorage.getItem('user_cinepro_server_url') || 'http://localhost:3001';
+    let customServerUrl = localStorage.getItem('user_cinepro_server_url') || 'http://localhost:3001';
+    customServerUrl = customServerUrl.trim();
+    if (customServerUrl && !/^https?:\/\//i.test(customServerUrl)) {
+      customServerUrl = 'http://' + customServerUrl;
+    }
+    
     addConsoleLine(`Checking Custom Scraper Server at ${customServerUrl}...`, 'info');
+    
+    const controller = new AbortController();
+    const fetchTimeoutId = setTimeout(() => controller.abort(), 5000);
+    
     try {
       const start = performance.now();
       const response = await fetch(customServerUrl, {
         method: 'GET',
-        headers: { 'Accept': 'application/json' }
+        headers: { 'Accept': 'application/json' },
+        signal: controller.signal
       });
+      clearTimeout(fetchTimeoutId);
       const latency = Math.round(performance.now() - start);
       setScraperLatency(latency);
 
@@ -126,9 +145,11 @@ export default function Status() {
         addConsoleLine(`⚠️ Scraper Server returned non-200 HTTP code: ${response.status} (latency: ${latency}ms)`, 'warning');
       }
     } catch (err) {
+      clearTimeout(fetchTimeoutId);
       setScraperStatus('offline');
+      const errorMsg = err.name === 'AbortError' ? 'Request timed out after 5000ms' : err.message;
       setScraperDetails('Local scraper client unreachable. Ensure port is active.');
-      addConsoleLine(`❌ Scraper Server unreachable: ${err.message}. Ensure your local server is running.`, 'error');
+      addConsoleLine(`❌ Scraper Server unreachable: ${errorMsg}. Ensure your local server is running.`, 'error');
     }
 
     addConsoleLine('System diagnostic process completed.', 'input');
@@ -137,8 +158,28 @@ export default function Status() {
 
   useEffect(() => {
     runDiagnostics();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+
+    // Auto-refresh interval (every 45s)
+    const intervalId = setInterval(() => {
+      runDiagnostics();
+    }, 45000);
+
+    // Tab-focus / Visibility auto-refresh trigger
+    const handleVisibilityAndFocus = () => {
+      if (document.visibilityState === 'visible') {
+        runDiagnostics();
+      }
+    };
+
+    window.addEventListener('focus', handleVisibilityAndFocus);
+    document.addEventListener('visibilitychange', handleVisibilityAndFocus);
+
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener('focus', handleVisibilityAndFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityAndFocus);
+    };
+  }, [runDiagnostics]);
 
   // Scroll to bottom of terminal when lines are added
   useEffect(() => {

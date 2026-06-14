@@ -53,19 +53,48 @@ export default function Footer() {
   const [systemStatus, setSystemStatus] = useState('operational');
 
   useEffect(() => {
+    const controller = new AbortController();
+
     const checkStatus = async () => {
-      try {
-        const { error } = await supabase.from('system_config').select('key').limit(1);
-        if (error) {
-          setSystemStatus('degraded');
-        } else {
-          setSystemStatus('operational');
-        }
-      } catch {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+      if (!supabaseUrl || !supabaseAnonKey) {
         setSystemStatus('offline');
+        return;
+      }
+
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+      try {
+        const res = await fetch(`${supabaseUrl}/rest/v1/system_config?select=key&limit=1`, {
+          headers: {
+            'apikey': supabaseAnonKey,
+            'Authorization': `Bearer ${supabaseAnonKey}`
+          },
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (res.ok) {
+          setSystemStatus('operational');
+        } else {
+          setSystemStatus('degraded');
+        }
+      } catch (err) {
+        clearTimeout(timeoutId);
+        if (err.name !== 'AbortError') {
+          setSystemStatus('offline');
+        }
       }
     };
+
     checkStatus();
+
+    return () => {
+      controller.abort();
+    };
   }, []);
 
   return (
