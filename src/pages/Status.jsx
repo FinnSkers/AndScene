@@ -13,7 +13,8 @@ import {
   RefreshCw,
   Cpu,
   ShieldCheck,
-  AlertOctagon
+  AlertOctagon,
+  Tv
 } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 import { fetchTrending, fetchUpcoming, getMovieGenres } from '../services/tmdb';
@@ -31,14 +32,14 @@ export default function Status() {
   const [tmdbLatency, setTmdbLatency] = useState(null);
   const [tmdbDetails, setTmdbDetails] = useState('');
 
-  const [scraperStatus, setScraperStatus] = useState('checking');
-  const [scraperLatency, setScraperLatency] = useState(null);
-  const [scraperDetails, setScraperDetails] = useState('');
+  const [sourcesStatus, setSourcesStatus] = useState('checking');
+  const [sourcesLatency, setSourcesLatency] = useState(null);
+  const [sourcesDetails, setSourcesDetails] = useState('');
 
   // Latency History Arrays (Sparklines)
   const [supabaseHistory, setSupabaseHistory] = useState([45, 52, 48, 61, 55, 60, 50]);
   const [tmdbHistory, setTmdbHistory] = useState([120, 135, 110, 140, 95, 105, 115]);
-  const [scraperHistory, setScraperHistory] = useState([12, 18, 15, 22, 20, 25, 18]);
+  const [sourcesHistory, setSourcesHistory] = useState([180, 210, 195, 230, 205, 220, 200]);
 
   // Database tables checks
   const [dbTables, setDbTables] = useState({
@@ -56,11 +57,11 @@ export default function Status() {
     genres: 'checking'
   });
 
-  // Scraper endpoints checks
-  const [scraperEndpoints, setScraperEndpoints] = useState({
-    base: 'checking',
-    movies: 'checking',
-    tv: 'checking'
+  // Sources endpoints checks
+  const [sourcesEndpoints, setSourcesEndpoints] = useState({
+    vidking: 'checking',
+    vidlink: 'checking',
+    vidsrc: 'checking'
   });
 
   // Terminal diagnostic console
@@ -243,93 +244,67 @@ export default function Status() {
       }
 
       // ----------------------------------------------------
-      // 3. CUSTOM SCRAPER SERVER DIAGNOSTIC
+      // 3. MOVIE STREAMING SOURCES DIAGNOSTIC
       // ----------------------------------------------------
-      setScraperStatus('checking');
-      setScraperEndpoints({ base: 'checking', movies: 'checking', tv: 'checking' });
+      setSourcesStatus('checking');
+      setSourcesEndpoints({ vidking: 'checking', vidlink: 'checking', vidsrc: 'checking' });
       
-      let customServerUrl = localStorage.getItem('user_cinepro_server_url') || 'http://localhost:3001';
-      customServerUrl = customServerUrl.trim();
-      if (customServerUrl && !/^https?:\/\//i.test(customServerUrl)) {
-        customServerUrl = 'http://' + customServerUrl;
-      }
+      addConsoleLine('Pinging Movie Streaming sources...', 'info');
       
-      addConsoleLine(`Checking Custom Scraper Server at ${customServerUrl}...`, 'info');
-      
-      try {
-        const start = performance.now();
-        const baseController = new AbortController();
-        const baseTimeout = setTimeout(() => baseController.abort(), 4000);
-        
-        const response = await fetch(customServerUrl, {
-          method: 'GET',
-          headers: { 'Accept': 'application/json' },
-          signal: baseController.signal
-        });
-        clearTimeout(baseTimeout);
-        const latency = Math.round(performance.now() - start);
-        
-        setScraperLatency(latency);
-        setScraperHistory(prev => [...prev.slice(1), latency]);
+      const sourcesList = [
+        { id: 'vidking', name: 'VidKing', url: 'https://vidking.net' },
+        { id: 'vidlink', name: 'VidLink', url: 'https://vidlink.pro' },
+        { id: 'vidsrc', name: 'VidSrc.cc', url: 'https://vidsrc.cc' }
+      ];
 
-        if (response.ok) {
-          const body = await response.json();
-          setScraperStatus('operational');
-          setScraperDetails(`Running on port 3001. Resolve routes online.`);
-          addConsoleLine(`✅ Scraper Server responded. Message: "${body.message}" (latency: ${latency}ms)`, 'success');
-          setScraperEndpoints(prev => ({ ...prev, base: 'ok' }));
-        } else {
-          setScraperStatus('degraded');
-          setScraperDetails(`Server returned bad status: ${response.status}`);
-          addConsoleLine(`⚠️ Scraper Server returned non-200 HTTP code: ${response.status} (latency: ${latency}ms)`, 'warning');
-          setScraperEndpoints(prev => ({ ...prev, base: 'error' }));
-        }
+      let overallStart = performance.now();
+      let operationalCount = 0;
 
-        // Check stream resolvers
-        addConsoleLine('Checking stream resolver endpoints (Movie / TV)...', 'info');
-        
-        // Check movie resolver (Fight Club dummy check - ID 550)
+      await Promise.all(sourcesList.map(async (src) => {
         try {
-          const mController = new AbortController();
-          const mTimeout = setTimeout(() => mController.abort(), 4000);
-          const mRes = await fetch(`${customServerUrl}/v1/movies/550`, { signal: mController.signal });
-          clearTimeout(mTimeout);
-          if (mRes.ok) {
-            setScraperEndpoints(prev => ({ ...prev, movies: 'ok' }));
-            addConsoleLine('  - Endpoint [/v1/movies/:id] resolved successfully.', 'success');
-          } else {
-            throw new Error(`Bad status ${mRes.status}`);
-          }
-        } catch (e) {
-          setScraperEndpoints(prev => ({ ...prev, movies: 'error' }));
-          addConsoleLine(`  - ❌ Endpoint [/v1/movies/:id] failed resolver check: ${e.message}`, 'warning');
-        }
+          const start = performance.now();
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 5000);
+          
+          // Using mode: 'no-cors' to allow cross-origin reachability checking without CORS blockers.
+          // Network errors or DNS failures will still throw.
+          await fetch(src.url, { 
+            method: 'GET',
+            mode: 'no-cors',
+            signal: controller.signal
+          });
+          clearTimeout(timeout);
+          const latency = Math.round(performance.now() - start);
+          operationalCount++;
 
-        // Check TV resolver (The Flash dummy check - ID 60735)
-        try {
-          const tController = new AbortController();
-          const tTimeout = setTimeout(() => tController.abort(), 4000);
-          const tRes = await fetch(`${customServerUrl}/v1/tv/60735/seasons/1/episodes/1`, { signal: tController.signal });
-          clearTimeout(tTimeout);
-          if (tRes.ok) {
-            setScraperEndpoints(prev => ({ ...prev, tv: 'ok' }));
-            addConsoleLine('  - Endpoint [/v1/tv/:id/seasons/.../episodes/...] resolved successfully.', 'success');
-          } else {
-            throw new Error(`Bad status ${tRes.status}`);
-          }
-        } catch (e) {
-          setScraperEndpoints(prev => ({ ...prev, tv: 'error' }));
-          addConsoleLine(`  - ❌ Endpoint [/v1/tv/:id/seasons/.../episodes/...] failed resolver check: ${e.message}`, 'warning');
+          setSourcesEndpoints(prev => ({ ...prev, [src.id]: 'ok' }));
+          addConsoleLine(`✅ Source [${src.name}] is reachable (latency: ${latency}ms)`, 'success');
+        } catch (err) {
+          const isTimeout = err.name === 'AbortError';
+          const msg = isTimeout ? 'Request timed out after 5000ms' : err.message;
+          setSourcesEndpoints(prev => ({ ...prev, [src.id]: 'error' }));
+          addConsoleLine(`❌ Source [${src.name}] unreachable: ${msg}`, 'error');
         }
+      }));
 
-      } catch (err) {
-        setScraperStatus('offline');
-        setScraperLatency(null);
-        setScraperHistory(prev => [...prev.slice(1), 0]);
-        const errorMsg = err.name === 'AbortError' ? 'Request timed out after 4000ms' : err.message;
-        setScraperDetails('Local scraper client unreachable. Ensure port is active.');
-        addConsoleLine(`❌ Scraper Server unreachable: ${errorMsg}. Ensure your local server is running.`, 'error');
-        setScraperEndpoints({ base: 'error', movies: 'error', tv: 'error' });
+      const totalLatency = Math.round(performance.now() - overallStart);
+      const avgLatency = Math.round(totalLatency / sourcesList.length);
+
+      if (operationalCount === sourcesList.length) {
+        setSourcesStatus('operational');
+        setSourcesDetails('All movie streaming sources are online and reachable.');
+        setSourcesLatency(avgLatency);
+        setSourcesHistory(prev => [...prev.slice(1), avgLatency]);
+      } else if (operationalCount > 0) {
+        setSourcesStatus('degraded');
+        setSourcesDetails('One or more movie streaming sources are unreachable.');
+        setSourcesLatency(avgLatency);
+        setSourcesHistory(prev => [...prev.slice(1), avgLatency]);
+      } else {
+        setSourcesStatus('offline');
+        setSourcesDetails('All movie streaming sources are currently unreachable.');
+        setSourcesLatency(null);
+        setSourcesHistory(prev => [...prev.slice(1), 0]);
       }
     } finally {
       addConsoleLine('System diagnostic process completed.', 'input');
@@ -352,9 +327,9 @@ export default function Status() {
   }, [consoleLines]);
 
   const getOverallStatus = () => {
-    const statuses = [supabaseStatus, tmdbStatus, scraperStatus];
+    const statuses = [supabaseStatus, tmdbStatus, sourcesStatus];
     if (statuses.includes('checking')) return { class: 'checking', text: 'Checking Systems...', msg: 'Diagnosing system dependencies.' };
-    if (statuses.every(s => s === 'operational')) return { class: 'all-good', text: 'All Systems Operational', msg: 'Supabase Database, TMDB API, and Scraper Server are online.' };
+    if (statuses.every(s => s === 'operational')) return { class: 'all-good', text: 'All Systems Operational', msg: 'Supabase Database, TMDB API, and Streaming Sources are online.' };
     if (statuses.every(s => s === 'offline')) return { class: 'all-down', text: 'Major System Outage', msg: 'Critical systems are currently unreachable.' };
     return { class: 'partial-issue', text: 'Partial System Outage / Degraded', msg: 'One or more systems are experiencing downtime or are offline.' };
   };
@@ -535,56 +510,56 @@ export default function Status() {
             </div>
           </div>
 
-          {/* Scraper Server */}
+          {/* Streaming Sources */}
           <div className="service-card">
             <div className="service-card-header">
               <div className="service-name-wrapper">
-                <Server className="service-icon" size={22} />
-                <h3>Scraper API</h3>
+                <Tv className="service-icon" size={22} />
+                <h3>Streaming Sources</h3>
               </div>
-              <div className={`status-indicator status-${scraperStatus}`}>
+              <div className={`status-indicator status-${sourcesStatus}`}>
                 <span className="dot pulse"></span>
-                {scraperStatus.charAt(0).toUpperCase() + scraperStatus.slice(1)}
+                {sourcesStatus.charAt(0).toUpperCase() + sourcesStatus.slice(1)}
               </div>
             </div>
             
-            <p className="service-description">{scraperDetails || 'Testing media resolver server...'}</p>
+            <p className="service-description">{sourcesDetails || 'Testing movie streaming servers...'}</p>
             
-            {/* Resolver Checklist */}
+            {/* Sources Checklist */}
             <div className="inner-details-box">
-              <span className="inner-details-title">Resolver Endpoints</span>
+              <span className="inner-details-title">Sources Reachability</span>
               <div className="endpoint-list">
                 <div className="endpoint-item">
-                  <span className="endpoint-path">/ (Root Health check)</span>
-                  <span className={`endpoint-status ${scraperEndpoints.base}`}>
-                    {scraperEndpoints.base === 'ok' ? 'operational' : scraperEndpoints.base === 'checking' ? 'checking' : 'failed'}
+                  <span className="endpoint-path">VidKing (Default)</span>
+                  <span className={`endpoint-status ${sourcesEndpoints.vidking}`}>
+                    {sourcesEndpoints.vidking === 'ok' ? 'operational' : sourcesEndpoints.vidking === 'checking' ? 'checking' : 'failed'}
                   </span>
                 </div>
                 <div className="endpoint-item">
-                  <span className="endpoint-path">/v1/movies/:tmdbId</span>
-                  <span className={`endpoint-status ${scraperEndpoints.movies}`}>
-                    {scraperEndpoints.movies === 'ok' ? 'operational' : scraperEndpoints.movies === 'checking' ? 'checking' : 'failed'}
+                  <span className="endpoint-path">VidLink (Ad-Free)</span>
+                  <span className={`endpoint-status ${sourcesEndpoints.vidlink}`}>
+                    {sourcesEndpoints.vidlink === 'ok' ? 'operational' : sourcesEndpoints.vidlink === 'checking' ? 'checking' : 'failed'}
                   </span>
                 </div>
                 <div className="endpoint-item">
-                  <span className="endpoint-path">/v1/tv/:tmdbId/...</span>
-                  <span className={`endpoint-status ${scraperEndpoints.tv}`}>
-                    {scraperEndpoints.tv === 'ok' ? 'operational' : scraperEndpoints.tv === 'checking' ? 'checking' : 'failed'}
+                  <span className="endpoint-path">VidSrc.cc (EmbedIn)</span>
+                  <span className={`endpoint-status ${sourcesEndpoints.vidsrc}`}>
+                    {sourcesEndpoints.vidsrc === 'ok' ? 'operational' : sourcesEndpoints.vidsrc === 'checking' ? 'checking' : 'failed'}
                   </span>
                 </div>
               </div>
             </div>
 
             {/* Latency History Graph */}
-            {scraperLatency !== null && (
+            {sourcesLatency !== null && (
               <div className="inner-details-box" style={{ marginTop: 'auto', marginBottom: '20px' }}>
-                <span className="inner-details-title">Latency Trends</span>
+                <span className="inner-details-title">Avg Latency Trends</span>
                 <div className="latency-history-wrapper">
-                  {scraperHistory.map((val, idx) => (
+                  {sourcesHistory.map((val, idx) => (
                     <div 
                       key={idx} 
-                      className={`latency-bar ${val > 100 ? 'high-latency' : val === 0 ? 'error-bar' : ''}`}
-                      style={{ height: `${Math.min(100, Math.max(10, (val / 150) * 100))}%` }}
+                      className={`latency-bar ${val > 250 ? 'high-latency' : val === 0 ? 'error-bar' : ''}`}
+                      style={{ height: `${Math.min(100, Math.max(10, (val / 300) * 100))}%` }}
                     >
                       <span className="latency-tooltip">{val === 0 ? 'Timeout' : `${val}ms`}</span>
                     </div>
@@ -595,13 +570,13 @@ export default function Status() {
 
             <div className="service-details">
               <div className="metric-row">
-                <span className="metric-label">Server Port</span>
-                <span className="metric-value">3001</span>
+                <span className="metric-label">Total Sources</span>
+                <span className="metric-value">3 Servers</span>
               </div>
               <div className="metric-row">
-                <span className="metric-label">Latency</span>
+                <span className="metric-label">Avg Latency</span>
                 <span className="metric-value latency">
-                  {scraperLatency ? `${scraperLatency} ms` : '--'}
+                  {sourcesLatency ? `${sourcesLatency} ms` : '--'}
                 </span>
               </div>
             </div>
