@@ -45,7 +45,7 @@ export default function Admin() {
   const [savingHero, setSavingHero] = useState(false);
 
   // Default server states
-  const [globalDefaultServer, setGlobalDefaultServer] = useState('0');
+  const [globalDefaultServer, setGlobalDefaultServer] = useState('1');
   const [savingServer, setSavingServer] = useState(false);
 
   // Mock server resources for metrics panel
@@ -693,8 +693,8 @@ export default function Admin() {
                     onChange={(e) => setGlobalDefaultServer(e.target.value)}
                     style={{ marginBottom: '10px' }}
                   >
-                    <option value="0">VidKing (Default / Dynamic Ad-free)</option>
-                    <option value="1">VidLink</option>
+                    <option value="1">VidLink (Default - Ad-Free/Fast)</option>
+                    <option value="0">VidKing</option>
                     <option value="2">VidSrc.me</option>
                     <option value="3">VidSrc.to</option>
                     <option value="4">EmbedSU</option>

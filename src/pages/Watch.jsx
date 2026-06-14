@@ -25,7 +25,7 @@ export default function Watch() {
   const partyParam = searchParams.get('party') || '';
   const isHost = searchParams.get('host') === 'true';
   const controlMode = searchParams.get('mode') || 'host-only';
-  const serverParam = parseInt(searchParams.get('server')) || 0;
+  const serverParam = searchParams.get('server') !== null ? parseInt(searchParams.get('server')) : -1;
 
   const [details, setDetails] = useState(null);
   const [seasonDetails, setSeasonDetails] = useState(null);
@@ -224,7 +224,9 @@ export default function Watch() {
         }]);
       })
       .on('broadcast', { event: 'episode-change' }, ({ payload }) => {
-        setSearchParams({ s: payload.season, e: payload.episode, party: partyParam, host: isHost ? 'true' : 'false', mode: controlMode });
+        const nextParams = { s: payload.season, e: payload.episode, party: partyParam, host: isHost ? 'true' : 'false', mode: controlMode };
+        if (serverParam !== -1) nextParams.server = serverParam;
+        setSearchParams(nextParams);
         setMessages(prev => [...prev, {
           id: Date.now() + Math.random(),
           isSystem: true,
@@ -311,7 +313,9 @@ export default function Watch() {
       return;
     }
 
-    setSearchParams({ s: seasonNum, e: episodeNum, party: partyParam, host: isHost ? 'true' : 'false', mode: controlMode, server: serverParam });
+    const nextParams = { s: seasonNum, e: episodeNum, party: partyParam, host: isHost ? 'true' : 'false', mode: controlMode };
+    if (serverParam !== -1) nextParams.server = serverParam;
+    setSearchParams(nextParams);
 
     // Sync episode selection across the party
     if (channelRef.current) {
@@ -333,7 +337,9 @@ export default function Watch() {
       showToast('Only the host can change episodes.');
       return;
     }
-    setSearchParams({ s: e.target.value, e: 1, party: partyParam, host: isHost ? 'true' : 'false', mode: controlMode, server: serverParam });
+    const nextParams = { s: e.target.value, e: 1, party: partyParam, host: isHost ? 'true' : 'false', mode: controlMode };
+    if (serverParam !== -1) nextParams.server = serverParam;
+    setSearchParams(nextParams);
   };
 
   // Watch Party Controls

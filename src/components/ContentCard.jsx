@@ -142,7 +142,11 @@ export default function ContentCard({ item, index = 0, isTop10 = false, showProg
 
               {/* Meta line */}
               <div className="content-card__meta">
-                {item.match && <span className="content-card__match">{item.match}% Match</span>}
+                {(item.voteAverage || item.match) && (
+                  <span className="content-card__match">
+                    ⭐ {item.voteAverage || (item.match / 10).toFixed(1)}
+                  </span>
+                )}
                 {item.rating && <span className="content-card__rating">{item.rating}</span>}
                 {item.year && <span className="content-card__year">{item.year}</span>}
               </div>

@@ -23,7 +23,7 @@ export default function WatchParty() {
   const [roomName, setRoomName] = useState('');
   const [isPublic, setIsPublic] = useState(true);
   const [hostControl, setHostControl] = useState('host-only'); // 'host-only' | 'collaborative'
-  const [defaultServer, setDefaultServer] = useState('0'); // index 0 (VidKing)
+  const [defaultServer, setDefaultServer] = useState('1'); // index 1 (VidLink)
   
   const [joinCode, setJoinCode] = useState('');
   const [publicParties, setPublicParties] = useState([]);
@@ -343,8 +343,8 @@ export default function WatchParty() {
                       value={defaultServer}
                       onChange={(e) => setDefaultServer(e.target.value)}
                     >
-                      <option value="0">VidKing (Default/Ad-Free)</option>
-                      <option value="1">VidLink</option>
+                      <option value="1">VidLink (Default - Ad-Free/Fast)</option>
+                      <option value="0">VidKing</option>
                       <option value="2">VidSrc.me</option>
                       <option value="3">VidSrc.to</option>
                       <option value="4">EmbedSU</option>

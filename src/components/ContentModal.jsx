@@ -124,7 +124,7 @@ export default function ContentModal() {
                     {/* Left column */}
                     <div>
                       <div className="modal__meta">
-                        <span className="match-score">{displayContent.match}% Match</span>
+                        <span className="match-score">⭐ {displayContent.voteAverage || (displayContent.match / 10).toFixed(1)}</span>
                         <span className="modal__meta-year">{displayContent.year}</span>
                         <span className="maturity-badge">{displayContent.rating}</span>
                         <span className="modal__meta-duration">{displayContent.duration}</span>
@@ -177,7 +177,7 @@ export default function ContentModal() {
                               </div>
                               <div className="modal__similar-meta">
                                 <span className="match-score" style={{ fontSize: 'var(--text-xs)' }}>
-                                  {item.match}% Match
+                                  ⭐ {item.voteAverage || (item.match / 10).toFixed(1)}
                                 </span>
                                 <span className="maturity-badge">{item.rating}</span>
                               </div>

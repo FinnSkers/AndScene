@@ -7,17 +7,17 @@ import './VideoPlayer.css';
 
 const SOURCES = [
   {
-    name: 'VidKing (Default)',
+    name: 'VidKing',
     getMovieUrl: (id) => `https://vidking.net/embed/movie/${id}`,
     getTvUrl: (id, s, e) => `https://vidking.net/embed/tv/${id}/${s}/${e}`,
   },
   {
-    name: 'VidLink (Ad-Free/Fast)',
+    name: 'VidLink (Default - Ad-Free/Fast)',
     getMovieUrl: (id) => `https://vidlink.pro/movie/${id}?primaryColor=E50914`,
     getTvUrl: (id, s, e) => `https://vidlink.pro/tv/${id}/${s}/${e}?primaryColor=E50914`,
   },
   {
-    name: 'VidSrc.cc (EmbedIn Default)',
+    name: 'VidSrc.cc',
     getMovieUrl: (id) => `https://vidsrc.cc/v2/embed/movie/${id}`,
     getTvUrl: (id, s, e) => `https://vidsrc.cc/v2/embed/tv/${id}/${s}/${e}`,
   },
@@ -35,12 +35,12 @@ export default function VideoPlayer({
   season = 1, 
   episode = 1, 
   startTime = 0, 
-  defaultServer = 0, 
+  defaultServer = -1, 
   onDirectUrlChange,
   details 
 }) {
   const { activeProfile, user, addToContinueWatching } = useApp();
-  const [sourceIndex, setSourceIndex] = useState(defaultServer);
+  const [sourceIndex, setSourceIndex] = useState(defaultServer === -1 ? 1 : defaultServer);
   const [showControls, setShowControls] = useState(false);
   const controlsTimeoutRef = useRef(null);
 
@@ -399,7 +399,7 @@ export default function VideoPlayer({
   }, []);
 
   useEffect(() => {
-    if (defaultServer === 0) {
+    if (defaultServer === -1) {
       const loadDefaultServer = async () => {
         try {
           const { data, error } = await supabase

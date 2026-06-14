@@ -64,12 +64,15 @@ const mapTmdbItem = (item, defaultType = 'movie') => {
     title: item.title || item.name || item.original_name,
     description: item.overview,
     type: type === 'tv' ? 'series' : type,
-    genre: (item.genre_ids || []).map(id => genreMap[id]).filter(Boolean),
+    genre: item.genres 
+      ? item.genres.map(g => g.name || g).filter(Boolean)
+      : (item.genre_ids || []).map(id => genreMap[id]).filter(Boolean),
     year: (item.release_date || item.first_air_date || '').split('-')[0],
     releaseDate: item.release_date || item.first_air_date,
     rating: item.adult ? 'R' : 'PG-13', 
     duration: type === 'movie' ? '2h 10m' : '1 Season', 
     match: Math.round((item.vote_average || 0) * 10),
+    voteAverage: item.vote_average ? Number(item.vote_average).toFixed(1) : '7.0',
     backdrop: item.backdrop_path ? `${IMAGE_BASE_URL}${BACKDROP_SIZE}${item.backdrop_path}` : null,
     poster: item.poster_path ? `${IMAGE_BASE_URL}${POSTER_SIZE}${item.poster_path}` : null,
   };

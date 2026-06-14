@@ -33,7 +33,9 @@ export default function Home() {
   const { myList, continueWatching, toast, setIsTMDBSettingsOpen } = useApp();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(() => {
+    return sessionStorage.getItem('andscene_splash_shown') !== 'true';
+  });
   const [announcement, setAnnouncement] = useState('');
   const [activeGenre, setActiveGenre] = useState('all');
   const [showApiPrompt, setShowApiPrompt] = useState(
@@ -146,7 +148,15 @@ export default function Home() {
   return (
     <div className="home-page">
       <AnimatePresence>
-        {showSplash && <Splash key="splash" onComplete={() => setShowSplash(false)} />}
+        {showSplash && (
+          <Splash 
+            key="splash" 
+            onComplete={() => {
+              sessionStorage.setItem('andscene_splash_shown', 'true');
+              setShowSplash(false);
+            }} 
+          />
+        )}
       </AnimatePresence>
 
       <AnimatePresence>

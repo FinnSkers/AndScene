@@ -206,7 +206,7 @@ export default function DecisionModeModal({ isOpen, onClose, onSelectContent }) 
                         <img src={item.backdrop || item.poster} alt={item.title} />
                         <div className="rec-card-badge">
                           <Award size={14} />
-                          <span>{item.match}% Match</span>
+                          <span>⭐ {item.voteAverage || (item.match / 10).toFixed(1)}</span>
                         </div>
                       </div>
                       <div className="rec-card-info">

@@ -160,8 +160,8 @@ export default function Hero() {
           </motion.div>
 
           <motion.div variants={childVariants} className="hero__meta">
-            {currentItem.match && (
-              <span className="match-score">{currentItem.match}% Match</span>
+            {(currentItem.voteAverage || currentItem.match) && (
+              <span className="match-score">⭐ {currentItem.voteAverage || (currentItem.match / 10).toFixed(1)}</span>
             )}
             {currentItem.year && (
               <span style={{ color: 'var(--text-secondary)', fontSize: 'var(--text-sm)' }}>

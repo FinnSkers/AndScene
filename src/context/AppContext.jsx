@@ -606,12 +606,16 @@ const login = useCallback(async (email, password) => {
   }, []);
 
   const addToContinueWatching = useCallback(async (item, progressVal = null) => {
-    const finalProgress = progressVal !== null ? Math.round(progressVal) : Math.floor(Math.random() * 80) + 10;
+    // Look up existing progress using string conversion to avoid type mismatches
+    const existing = continueWatching.find(i => String(i.id) === String(item.id));
+    const finalProgress = progressVal !== null 
+      ? Math.round(progressVal) 
+      : (existing ? existing.progress : 5);
     
     if (!activeProfile?.id || !user?.id) {
       setContinueWatching(prev => {
         const historyItem = { ...item, progress: finalProgress };
-        const filtered = prev.filter(i => i.id !== item.id);
+        const filtered = prev.filter(i => String(i.id) !== String(item.id));
         return [historyItem, ...filtered].slice(0, 20);
       });
       return;
@@ -619,7 +623,7 @@ const login = useCallback(async (email, password) => {
     if (user?.isTemp) {
       setContinueWatching(prev => {
         const historyItem = { ...item, progress: finalProgress };
-        const filtered = prev.filter(i => i.id !== item.id);
+        const filtered = prev.filter(i => String(i.id) !== String(item.id));
         const updated = [historyItem, ...filtered].slice(0, 20);
         localStorage.setItem(`andscene_sandbox_continue_${activeProfile.id}`, JSON.stringify(updated));
         return updated;
@@ -649,13 +653,13 @@ const login = useCallback(async (email, password) => {
 
       setContinueWatching(prev => {
         const historyItem = { ...item, progress: finalProgress };
-        const filtered = prev.filter(i => i.id !== item.id);
+        const filtered = prev.filter(i => String(i.id) !== String(item.id));
         return [historyItem, ...filtered].slice(0, 20);
       });
     } catch (err) {
       console.error('Error saving continue watching history', err);
     }
-  }, [activeProfile, user]);
+  }, [activeProfile, user, continueWatching]);
 
   const value = {
     user,
