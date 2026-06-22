@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { Maximize, Minimize, Loader2, Play, Pause, Volume2, VolumeX, Subtitles, Settings, RotateCcw, FastForward } from 'lucide-react';
+import { Maximize, Minimize, Loader2, Play, Pause, Volume2, VolumeX, Subtitles, Settings, RotateCcw, FastForward, Tv, Cast } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 import { useApp } from '../context/AppContext';
 import './VideoPlayer.css';
@@ -584,6 +584,7 @@ export default function VideoPlayer({
                   onTimeUpdate={(e) => setCurrentTime(e.target.currentTime)}
                   onLoadedMetadata={handleVideoLoadedMetadata}
                   onClick={togglePlay}
+                  x-webkit-airplay="allow"
                 >
                   {subtitleTrackUrl && (
                     <track 
@@ -719,6 +720,26 @@ export default function VideoPlayer({
                             ))}
                           </div>
                         )}
+                      </div>
+
+                      {/* Cast & AirPlay */}
+                      <button 
+                        type="button" 
+                        className="control-btn" 
+                        title="Apple AirPlay"
+                        onClick={() => {
+                          if (videoRef.current && videoRef.current.webkitShowPlaybackTargetPicker) {
+                            videoRef.current.webkitShowPlaybackTargetPicker();
+                          } else {
+                            triggerHud('AirPlay not supported on this browser');
+                          }
+                        }}
+                      >
+                        <Tv size={20} />
+                      </button>
+
+                      <div className="control-btn cast-wrapper" title="Google Cast">
+                        <google-cast-launcher style={{ width: '20px', height: '20px', display: 'block', cursor: 'pointer', filter: 'invert(1)' }}></google-cast-launcher>
                       </div>
 
                       <button type="button" onClick={toggleFullscreen} className="control-btn" title="Fullscreen">

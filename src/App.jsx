@@ -21,6 +21,8 @@ import TMDBSettingsModal from './components/TMDBSettingsModal';
 import RequireAdmin from './components/RequireAdmin';
 import UserManagement from './pages/UserManagement';
 import LoadingBar from './components/LoadingBar';
+import MyList from './pages/MyList';
+import Social from './pages/Social';
 import './App.css';
 
 function AppContent() {
@@ -56,6 +58,8 @@ function AppContent() {
             <Route path="/watch-party" element={<WatchParty />} />
             <Route path="/stats" element={<Stats />} />
             <Route path="/status" element={<Status />} />
+            <Route path="/mylist" element={<MyList />} />
+            <Route path="/social" element={<Social />} />
             <Route path="/watch/:type/:id" element={<Watch />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/admin/users" element={<RequireAdmin><UserManagement /></RequireAdmin>} />

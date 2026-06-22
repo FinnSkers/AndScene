@@ -14,6 +14,7 @@ export function AppProvider({ children }) {
   const [activeFrame, setActiveFrame] = useState('none');
   const [userProfiles, setUserProfiles] = useState([]);
   const [myList, setMyList] = useState([]);
+  const [watchlistFolders, setWatchlistFolders] = useState([]);
   const [continueWatching, setContinueWatching] = useState([]);
   
   const [modalContent, setModalContent] = useState(null);
@@ -278,6 +279,7 @@ export function AppProvider({ children }) {
           rating: row.vote_average ? Math.floor(row.vote_average * 10) : 80,
           match: row.vote_average ? Math.floor(row.vote_average * 10) : 80,
           year: row.release_date ? parseInt(row.release_date.split('-')[0]) : 2025,
+          folder_id: row.folder_id || null,
         }));
         setMyList(mappedList);
       } catch (err) {
@@ -286,6 +288,28 @@ export function AppProvider({ children }) {
     };
 
     loadWatchlist();
+  }, [activeProfile, user]);
+
+  // Sync Watchlist Folders when activeProfile changes
+  useEffect(() => {
+    const loadFolders = async () => {
+      if (!activeProfile?.id || user?.isTemp) {
+        setWatchlistFolders([]);
+        return;
+      }
+      try {
+        const { data, error } = await supabase
+          .from('watchlist_folders')
+          .select('*')
+          .eq('profile_id', activeProfile.id)
+          .order('created_at', { ascending: true });
+        if (error) throw error;
+        setWatchlistFolders(data || []);
+      } catch (err) {
+        console.error('Error loading watchlist folders', err);
+      }
+    };
+    loadFolders();
   }, [activeProfile, user]);
 
   // Sync Continue Watching when activeProfile changes
@@ -583,6 +607,56 @@ const login = useCallback(async (email, password) => {
     }
   }, [activeProfile, myList, showToast, user]);
 
+  const createFolder = useCallback(async (name) => {
+    if (!activeProfile?.id || user?.isTemp) return;
+    try {
+      const { data, error } = await supabase
+        .from('watchlist_folders')
+        .insert([{ profile_id: activeProfile.id, name }])
+        .select()
+        .single();
+      if (error) throw error;
+      setWatchlistFolders(prev => [...prev, data]);
+      showToast(`Folder "${name}" created!`);
+    } catch (err) {
+      console.error('Error creating folder', err);
+      showToast('Failed to create folder');
+    }
+  }, [activeProfile, user, showToast]);
+
+  const deleteFolder = useCallback(async (folderId) => {
+    if (!activeProfile?.id || user?.isTemp) return;
+    try {
+      const { error } = await supabase
+        .from('watchlist_folders')
+        .delete()
+        .eq('id', folderId);
+      if (error) throw error;
+      setWatchlistFolders(prev => prev.filter(f => f.id !== folderId));
+      setMyList(prev => prev.map(item => item.folder_id === folderId ? { ...item, folder_id: null } : item));
+      showToast('Folder deleted');
+    } catch (err) {
+      console.error('Error deleting folder', err);
+      showToast('Failed to delete folder');
+    }
+  }, [activeProfile, user, showToast]);
+
+  const moveToFolder = useCallback(async (mediaId, folderId) => {
+    if (!activeProfile?.id || user?.isTemp) return;
+    try {
+      const { error } = await supabase
+        .from('watchlist')
+        .update({ folder_id: folderId })
+        .eq('profile_id', activeProfile.id)
+        .eq('media_id', mediaId);
+      if (error) throw error;
+      setMyList(prev => prev.map(item => String(item.id) === String(mediaId) ? { ...item, folder_id: folderId } : item));
+    } catch (err) {
+      console.error('Error moving item to folder', err);
+      showToast('Failed to move item');
+    }
+  }, [activeProfile, user, showToast]);
+
   const toggleMyList = useCallback((item) => {
     if (myList.find(i => i.id === item.id)) {
       removeFromMyList(item.id);
@@ -677,10 +751,14 @@ const login = useCallback(async (email, password) => {
     activeFrame,
     saveProfileFrame,
     myList,
+    watchlistFolders,
     addToMyList,
     removeFromMyList,
     toggleMyList,
     isInMyList,
+    createFolder,
+    deleteFolder,
+    moveToFolder,
     modalContent,
     openModal,
     closeModal,

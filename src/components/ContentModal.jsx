@@ -2,10 +2,12 @@
 import { useEffect, useState } from 'react';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Play, Plus, Check, ThumbsUp, ThumbsDown, Share2, Loader2 } from 'lucide-react';
+import { X, Play, Plus, Check, ThumbsUp, ThumbsDown, Share2, Loader2, Sparkles, Star, Send } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { fetchDetails } from '../services/tmdb';
+import { generateAISummary } from '../services/ai';
+import { supabase } from '../services/supabaseClient';
 import './ContentModal.css';
 
 const backdropVariants = {
@@ -21,10 +23,17 @@ const modalVariants = {
 };
 
 export default function ContentModal() {
-  const { modalContent, closeModal, toggleMyList, isInMyList, openModal } = useApp();
+  const { modalContent, closeModal, toggleMyList, isInMyList, openModal, user, activeProfile } = useApp();
   const navigate = useNavigate();
   const [detailedContent, setDetailedContent] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  // New Features State
+  const [aiSummary, setAiSummary] = useState('');
+  const [isGeneratingAi, setIsGeneratingAi] = useState(false);
+  const [reviewText, setReviewText] = useState('');
+  const [rating, setRating] = useState(0);
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   const inList = detailedContent ? isInMyList(detailedContent.id) : (modalContent ? isInMyList(modalContent.id) : false);
 
@@ -52,6 +61,47 @@ export default function ContentModal() {
   const handlePlay = () => {
     closeModal();
     navigate(`/watch/${displayContent.type || 'movie'}/${displayContent.id}`);
+  };
+
+  const handleGenerateRecap = async () => {
+    setIsGeneratingAi(true);
+    setAiSummary('');
+    try {
+      const isTv = displayContent.type === 'tv' || displayContent.type === 'series';
+      const summary = await generateAISummary(displayContent.title, isTv);
+      setAiSummary(summary);
+    } catch (err) {
+      console.error('AI error', err);
+      setAiSummary('Failed to generate summary. Check your API key or try again.');
+    } finally {
+      setIsGeneratingAi(false);
+    }
+  };
+
+  const handleSubmitReview = async (e) => {
+    e.preventDefault();
+    if (!activeProfile?.id || !user?.id || user?.isTemp || rating === 0) {
+      alert("You must select a rating and be logged in to review.");
+      return;
+    }
+    setIsSubmittingReview(true);
+    try {
+      await supabase.from('reviews').insert([{
+        profile_id: activeProfile.id,
+        media_id: displayContent.id.toString(),
+        media_type: displayContent.type || 'movie',
+        rating,
+        review_text: reviewText
+      }]);
+      setReviewText('');
+      setRating(0);
+      alert('Review posted to the Social Feed!');
+    } catch (err) {
+      console.error(err);
+      alert('Error posting review');
+    } finally {
+      setIsSubmittingReview(false);
+    }
   };
 
   return (
@@ -108,6 +158,10 @@ export default function ContentModal() {
                   <button className="btn-icon large" title="Share">
                     <Share2 size={20} />
                   </button>
+                  <button className="btn btn-secondary ai-btn" onClick={handleGenerateRecap} disabled={isGeneratingAi}>
+                    {isGeneratingAi ? <Loader2 className="spinner" size={16} /> : <Sparkles size={16} />}
+                    {displayContent.type === 'series' || displayContent.type === 'tv' ? 'AI Recap' : 'AI Pitch'}
+                  </button>
                 </div>
               </div>
             </div>
@@ -130,6 +184,24 @@ export default function ContentModal() {
                         <span className="modal__meta-duration">{displayContent.duration}</span>
                       </div>
                       <p className="modal__description">{displayContent.description}</p>
+                      
+                      {/* AI Summary Box */}
+                      <AnimatePresence>
+                        {(isGeneratingAi || aiSummary) && (
+                          <motion.div 
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="ai-summary-box"
+                          >
+                            <div className="ai-summary-header">
+                              <Sparkles size={16} className="text-primary" />
+                              <h4>AI Insight</h4>
+                            </div>
+                            <p>{isGeneratingAi ? 'Generating brilliant insights...' : aiSummary}</p>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
 
                     {/* Right column / sidebar */}
@@ -154,6 +226,40 @@ export default function ContentModal() {
                       )}
                     </div>
                   </div>
+
+                  {/* Social Review Form */}
+                  {!user?.isTemp && (
+                    <div className="modal__review-section">
+                      <h3 className="modal__section-title">Leave a Review</h3>
+                      <form className="review-form" onSubmit={handleSubmitReview}>
+                        <div className="review-stars">
+                          {[1, 2, 3, 4, 5].map(star => (
+                            <button
+                              key={star}
+                              type="button"
+                              className={`star-btn ${star <= rating ? 'active' : ''}`}
+                              onClick={() => setRating(star)}
+                            >
+                              <Star size={24} fill={star <= rating ? 'currentColor' : 'none'} />
+                            </button>
+                          ))}
+                        </div>
+                        <div className="review-input-group">
+                          <textarea 
+                            placeholder="What did you think?"
+                            value={reviewText}
+                            onChange={(e) => setReviewText(e.target.value)}
+                            maxLength={500}
+                            rows={3}
+                          />
+                          <button type="submit" className="btn btn-primary" disabled={isSubmittingReview || rating === 0}>
+                            {isSubmittingReview ? <Loader2 className="spinner" size={16} /> : <Send size={16} />}
+                            Post
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  )}
 
                   {/* More Like This */}
                   {displayContent.similar && displayContent.similar.length > 0 && (

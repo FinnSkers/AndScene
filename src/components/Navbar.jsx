@@ -14,7 +14,8 @@ const NAV_LINKS = [
   { label: 'Anime', path: '/anime' },
   { label: 'Watch Party', path: '/watch-party' },
   { label: 'New & Popular', path: '/browse?type=new' },
-  { label: 'My List', path: '/browse?type=mylist' },
+  { label: 'My List', path: '/mylist' },
+  { label: 'Social Feed', path: '/social' },
   // Admin link added dynamically
 
 ];
