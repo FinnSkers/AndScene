@@ -1,6 +1,7 @@
 const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
 
 export async function generateAISummary(title, isTvSeries) {
+  console.log('AI Key present?', !!OPENROUTER_API_KEY);
   if (!OPENROUTER_API_KEY) {
     throw new Error('OpenRouter API key is not configured.');
   }
@@ -18,7 +19,7 @@ export async function generateAISummary(title, isTvSeries) {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      model: 'google/gemini-2.5-flash:free',
+      model: 'google/gemma-4-31b-it:free',
       messages: [
         { role: 'system', content: 'You are a passionate film and TV buff. Keep responses extremely concise (3 sentences max), energetic, and avoid major spoilers.' },
         { role: 'user', content: prompt }
@@ -27,7 +28,9 @@ export async function generateAISummary(title, isTvSeries) {
   });
 
   if (!response.ok) {
-    throw new Error('Failed to fetch AI summary');
+    const text = await response.text();
+    console.error('OpenRouter Error:', response.status, text);
+    throw new Error(`Failed to fetch AI summary: ${response.status} ${text}`);
   }
 
   const data = await response.json();
