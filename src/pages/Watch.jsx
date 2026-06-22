@@ -342,6 +342,21 @@ export default function Watch() {
     setSearchParams(nextParams);
   };
 
+  const handleNextEpisode = () => {
+    if (type !== 'series' || !seasonDetails?.episodes) return;
+    
+    const currentIndex = seasonDetails.episodes.findIndex(e => e.episode_number === episodeParam);
+    if (currentIndex !== -1 && currentIndex < seasonDetails.episodes.length - 1) {
+      handleEpisodeSelect(seasonParam, seasonDetails.episodes[currentIndex + 1].episode_number);
+    } else {
+      // End of season, advance to next season E1 if it exists
+      const currentSeasonIndex = details?.seasonsList?.findIndex(s => s.season_number === seasonParam);
+      if (currentSeasonIndex !== -1 && currentSeasonIndex < (details?.seasonsList?.length || 0) - 1) {
+        handleEpisodeSelect(details.seasonsList[currentSeasonIndex + 1].season_number, 1);
+      }
+    }
+  };
+
   // Watch Party Controls
   const handleHostParty = () => {
     const code = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -657,15 +672,16 @@ export default function Watch() {
               padding: '8px 16px', 
               fontSize: '13px', 
               fontWeight: '600', 
-              background: 'rgba(255,255,255,0.08)',
-              border: '1px solid var(--border-subtle)',
+              background: directStreamUrl ? 'rgba(34, 197, 94, 0.15)' : 'rgba(255,255,255,0.08)',
+              border: `1px solid ${directStreamUrl ? 'rgba(34, 197, 94, 0.5)' : 'var(--border-subtle)'}`,
               borderRadius: 'var(--radius-full)',
-              color: 'var(--text-primary)',
+              color: directStreamUrl ? '#4ade80' : 'var(--text-primary)',
               cursor: 'pointer',
-              transition: 'all 0.2s'
+              transition: 'all 0.2s',
+              boxShadow: directStreamUrl ? '0 0 15px rgba(34, 197, 94, 0.2)' : 'none'
             }}
           >
-            <Download size={16} /> Download {type === 'series' ? 'Episode' : 'Movie'}
+            <Download size={16} /> {directStreamUrl ? 'Download Available' : `Download ${type === 'series' ? 'Episode' : 'Movie'}`}
           </button>
         </div>
 
@@ -693,6 +709,7 @@ export default function Watch() {
               partyChannel={channelRef.current}
               isHost={isHost}
               controlMode={controlMode}
+              onNextEpisode={handleNextEpisode}
             />
             
             {/* Watch Party Hosting / Joining Panel */}

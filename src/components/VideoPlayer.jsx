@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { Maximize, Minimize, Loader2, Play, Pause, Volume2, VolumeX, Subtitles, Settings, RotateCcw, FastForward, Tv, Cast } from 'lucide-react';
+import { Maximize, Minimize, Loader2, Play, Pause, Volume2, VolumeX, Subtitles, Settings, RotateCcw, FastForward, Tv, Cast, PictureInPicture, SkipForward } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 import { useApp } from '../context/AppContext';
 import './VideoPlayer.css';
@@ -40,7 +40,8 @@ export default function VideoPlayer({
   details,
   partyChannel,
   isHost,
-  controlMode
+  controlMode,
+  onNextEpisode
 }) {
   const { activeProfile, user, addToContinueWatching } = useApp();
   const [sourceIndex, setSourceIndex] = useState(defaultServer === -1 ? 1 : defaultServer);
@@ -199,6 +200,28 @@ export default function VideoPlayer({
       }
       setIsFullscreen(false);
       triggerHud('Exit Fullscreen');
+    }
+  };
+
+  const handlePiP = async () => {
+    try {
+      if (document.pictureInPictureElement) {
+        await document.exitPictureInPicture();
+        triggerHud('Exit PiP');
+      } else if (videoRef.current) {
+        await videoRef.current.requestPictureInPicture();
+        triggerHud('PiP Mode');
+      }
+    } catch (err) {
+      console.warn('PiP failed', err);
+      triggerHud('PiP not supported');
+    }
+  };
+
+  const handleSkipIntro = () => {
+    if (videoRef.current) {
+      videoRef.current.currentTime += 85; // Standard 85s skip
+      triggerHud('Skipped Intro');
     }
   };
 
@@ -599,6 +622,10 @@ export default function VideoPlayer({
     };
   }, []);
 
+  const showSkipIntro = currentSource.isDirect && currentTime > 5 && currentTime < 120;
+  const showUpNext = currentSource.isDirect && type === 'series' && duration > 0 && (duration - currentTime) < 60;
+  const showXRay = currentSource.isDirect && !isPlaying && details?.credits?.cast?.length > 0;
+
   return (
     <div 
       ref={containerRef}
@@ -659,6 +686,25 @@ export default function VideoPlayer({
                     </button>
                   </div>
                 )}
+                
+                {/* ── Binge Mode Overlays ── */}
+                {showSkipIntro && (
+                  <button className="skip-intro-btn glass animate-fade-in" onClick={handleSkipIntro}>
+                    <SkipForward size={16} /> Skip Intro
+                  </button>
+                )}
+
+                {showUpNext && (
+                  <div className="up-next-overlay glass animate-fade-in">
+                    <img src={details?.backdrop ? `https://image.tmdb.org/t/p/w300${details.backdrop}` : ''} alt="Up Next" className="up-next-img" />
+                    <div className="up-next-details">
+                      <h4>Up Next</h4>
+                      <p>Playing in {Math.floor(duration - currentTime)}s</p>
+                      <button className="btn btn-primary" onClick={onNextEpisode}>Play Next Episode</button>
+                    </div>
+                  </div>
+                )}
+                
                 <video
                   ref={videoRef}
                   key={directUrl}
@@ -830,6 +876,10 @@ export default function VideoPlayer({
                         <Tv size={20} />
                       </button>
 
+                      <button type="button" onClick={handlePiP} className="control-btn" title="Picture in Picture">
+                        <PictureInPicture size={20} />
+                      </button>
+
                       <div className="control-btn cast-wrapper" title="Google Cast">
                         <google-cast-launcher style={{ width: '20px', height: '20px', display: 'block', cursor: 'pointer', filter: 'invert(1)' }}></google-cast-launcher>
                       </div>
@@ -884,6 +934,30 @@ export default function VideoPlayer({
           >
             {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
           </button>
+        )}
+
+        {/* ── X-Ray Cast Overlay ── */}
+        {showXRay && (
+          <div className="xray-cast-overlay animate-fade-in">
+            <h4 className="xray-title">In Scene</h4>
+            <div className="xray-cast-list">
+              {details.credits.cast.slice(0, 6).map((actor) => (
+                <div key={actor.id} className="xray-actor-card glass">
+                  <div className="xray-actor-img-wrap">
+                    {actor.profile_path ? (
+                      <img src={`https://image.tmdb.org/t/p/w185${actor.profile_path}`} alt={actor.name} />
+                    ) : (
+                      <div className="xray-actor-img-fallback">{actor.name.charAt(0)}</div>
+                    )}
+                  </div>
+                  <div className="xray-actor-details">
+                    <span className="xray-actor-name">{actor.name}</span>
+                    <span className="xray-actor-char">{actor.character}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
       </div>
     </div>

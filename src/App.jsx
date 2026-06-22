@@ -28,10 +28,19 @@ import './App.css';
 
 function AppContent() {
   const location = useLocation();
+  const { user, activeProfile } = useApp();
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [location.pathname]);
+
+  const publicPaths = ['/landing', '/login', '/signup', '/admin'];
+  const isPublicPath = publicPaths.some(p => location.pathname.startsWith(p));
+  
+  // Enforce profile selection:
+  if (user && !activeProfile && !isPublicPath && location.pathname !== '/profiles') {
+    return <Navigate to="/profiles" replace />;
+  }
 
   return (
     <>
