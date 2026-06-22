@@ -37,7 +37,10 @@ export default function VideoPlayer({
   startTime = 0, 
   defaultServer = -1, 
   onDirectUrlChange,
-  details 
+  details,
+  partyChannel,
+  isHost,
+  controlMode
 }) {
   const { activeProfile, user, addToContinueWatching } = useApp();
   const [sourceIndex, setSourceIndex] = useState(defaultServer === -1 ? 1 : defaultServer);
@@ -74,6 +77,9 @@ export default function VideoPlayer({
   const lastSavedPercentRef = useRef(0);
   const lastTapRef = useRef({ time: 0, x: 0, y: 0 });
   const swipeStartRef = useRef(null);
+  
+  // Watch Party Sync flag
+  const isSyncingRef = useRef(false);
 
   // Trigger brief visual indicator overlay (HUD)
   const triggerHud = (message) => {
@@ -84,17 +90,41 @@ export default function VideoPlayer({
     }, 800);
   };
 
+  const broadcastSync = (action, forceTime = null) => {
+    if (!partyChannel || !videoRef.current || isSyncingRef.current) return;
+    if (!isHost && controlMode === 'host-only') return; // Only host broadcasts if host-only
+
+    partyChannel.send({
+      type: 'broadcast',
+      event: 'playback-sync',
+      payload: {
+        action,
+        time: forceTime !== null ? forceTime : videoRef.current.currentTime,
+        speed: videoRef.current.playbackRate
+      }
+    });
+  };
+
   const togglePlay = () => {
     const video = videoRef.current;
     if (!video) return;
+    
+    // Check if guest trying to control in host-only mode
+    if (partyChannel && !isHost && controlMode === 'host-only') {
+      triggerHud('Host Control Only');
+      return;
+    }
+
     if (video.paused) {
       video.play().catch(() => {});
       setIsPlaying(true);
       triggerHud('Play');
+      broadcastSync('play');
     } else {
       video.pause();
       setIsPlaying(false);
       triggerHud('Pause');
+      broadcastSync('pause');
     }
   };
 
@@ -110,9 +140,16 @@ export default function VideoPlayer({
   const handleSeek = (e) => {
     const video = videoRef.current;
     if (!video) return;
+    
+    if (partyChannel && !isHost && controlMode === 'host-only') {
+      triggerHud('Host Control Only');
+      return;
+    }
+
     const newTime = parseFloat(e.target.value);
     video.currentTime = newTime;
     setCurrentTime(newTime);
+    broadcastSync(isPlaying ? 'play' : 'pause', newTime);
   };
 
   const handleVolumeChange = (e) => {
@@ -131,10 +168,17 @@ export default function VideoPlayer({
   const handlePlaybackSpeed = (rate) => {
     const video = videoRef.current;
     if (!video) return;
+
+    if (partyChannel && !isHost && controlMode === 'host-only') {
+      triggerHud('Host Control Only');
+      return;
+    }
+
     video.playbackRate = rate;
     setPlaybackRate(rate);
     setIsSpeedMenuOpen(false);
     triggerHud(`Speed: ${rate}x`);
+    broadcastSync(isPlaying ? 'play' : 'pause');
   };
 
   const toggleFullscreen = () => {
@@ -499,6 +543,54 @@ export default function VideoPlayer({
       onDirectUrlChange(directUrl);
     }
   }, [directUrl, onDirectUrlChange]);
+
+  // --- Realtime Sync Listener ---
+  useEffect(() => {
+    if (!partyChannel || !videoRef.current || !SOURCES[sourceIndex]?.isDirect) return;
+
+    const syncHandler = ({ payload }) => {
+      const video = videoRef.current;
+      if (!video) return;
+
+      // Ignore if we are host and in host-only mode
+      if (isHost && controlMode === 'host-only') return;
+
+      isSyncingRef.current = true;
+      
+      const { action, time, speed } = payload;
+      
+      if (Math.abs(video.currentTime - time) > 1.5) {
+        video.currentTime = time;
+        setCurrentTime(time);
+      }
+
+      if (speed && video.playbackRate !== speed) {
+        video.playbackRate = speed;
+        setPlaybackRate(speed);
+      }
+
+      if (action === 'play' && video.paused) {
+        video.play().catch(() => {});
+        setIsPlaying(true);
+        triggerHud('Sync: Play');
+      } else if (action === 'pause' && !video.paused) {
+        video.pause();
+        setIsPlaying(false);
+        triggerHud('Sync: Pause');
+      }
+
+      setTimeout(() => {
+        isSyncingRef.current = false;
+      }, 500);
+    };
+
+    partyChannel.on('broadcast', { event: 'playback-sync' }, syncHandler);
+
+    return () => {
+      // Supabase v2 doesn't have a clean way to remove a single broadcast listener by function,
+      // but it's safe since the channel itself is managed and destroyed by Watch.jsx on unmount.
+    };
+  }, [partyChannel, isHost, controlMode, sourceIndex]);
 
   useEffect(() => {
     return () => {

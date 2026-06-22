@@ -690,6 +690,9 @@ export default function Watch() {
               defaultServer={serverParam}
               onDirectUrlChange={setDirectStreamUrl}
               details={details}
+              partyChannel={channelRef.current}
+              isHost={isHost}
+              controlMode={controlMode}
             />
             
             {/* Watch Party Hosting / Joining Panel */}

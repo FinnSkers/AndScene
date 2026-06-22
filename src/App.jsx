@@ -23,6 +23,7 @@ import UserManagement from './pages/UserManagement';
 import LoadingBar from './components/LoadingBar';
 import MyList from './pages/MyList';
 import Social from './pages/Social';
+import AIVibeMatcher from './components/AIVibeMatcher';
 import './App.css';
 
 function AppContent() {
@@ -37,6 +38,7 @@ function AppContent() {
       <LoadingBar />
       <ContinueWatchingWidget />
       <TMDBSettingsModal />
+      <AIVibeMatcher />
       <AnimatePresence mode="wait">
         <motion.div
           key={location.pathname}

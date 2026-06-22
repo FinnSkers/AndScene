@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, X, Send, Loader2, Play } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { searchMulti } from '../services/tmdb';
+import { generateVibeSearch } from '../services/ai';
 import './AIVibeMatcher.css';
 
 export default function AIVibeMatcher() {
@@ -39,22 +40,11 @@ export default function AIVibeMatcher() {
     setMessages(prev => [...prev, { id: botTempId, sender: 'bot', text: 'Analyzing your vibe...', isThinking: true }]);
 
     try {
-      const serverUrl = localStorage.getItem('user_cinepro_server_url') || 'http://localhost:3001';
-      const res = await fetch(`${serverUrl}/v1/ai/recommend`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: userPrompt })
-      });
-
-      if (!res.ok) {
-        throw new Error('Failed to fetch recommendations');
-      }
-
-      const data = await res.json();
+      const recommendations = await generateVibeSearch(userPrompt);
       
-      if (data && data.success && data.recommendations) {
+      if (recommendations && recommendations.length > 0) {
         const resolvedItems = [];
-        for (const rec of data.recommendations) {
+        for (const rec of recommendations) {
           try {
             const tmdbResults = await searchMulti(rec.title);
             if (tmdbResults && tmdbResults.length > 0) {
@@ -92,7 +82,7 @@ export default function AIVibeMatcher() {
           return {
             id: botTempId,
             sender: 'bot',
-            text: `⚠️ Unable to connect to the recommendation service. Ensure your custom scraper server is running on port 3001.`
+            text: `⚠️ Unable to connect to the AI recommendation service. Please make sure the API key is valid and you have network access.`
           };
         }
         return msg;
