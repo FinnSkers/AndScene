@@ -23,31 +23,20 @@ import UserManagement from './pages/UserManagement';
 import LoadingBar from './components/LoadingBar';
 import MyList from './pages/MyList';
 import Social from './pages/Social';
-import AIVibeMatcher from './components/AIVibeMatcher';
 import './App.css';
 
 function AppContent() {
   const location = useLocation();
-  const { user, activeProfile } = useApp();
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [location.pathname]);
-
-  const publicPaths = ['/landing', '/login', '/signup', '/admin'];
-  const isPublicPath = publicPaths.some(p => location.pathname.startsWith(p));
-  
-  // Enforce profile selection:
-  if (user && !activeProfile && !isPublicPath && location.pathname !== '/profiles') {
-    return <Navigate to="/profiles" replace />;
-  }
 
   return (
     <>
       <LoadingBar />
       <ContinueWatchingWidget />
       <TMDBSettingsModal />
-      <AIVibeMatcher />
       <AnimatePresence mode="wait">
         <motion.div
           key={location.pathname}

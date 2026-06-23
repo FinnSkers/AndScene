@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { Maximize, Minimize, Loader2, Play, Pause, Volume2, VolumeX, Subtitles, Settings, RotateCcw, FastForward, Tv, Cast, PictureInPicture, SkipForward } from 'lucide-react';
+import { Maximize, Minimize, Loader2, Play, Pause, Volume2, VolumeX, Subtitles, Settings, RotateCcw, FastForward, Tv, Cast } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 import { useApp } from '../context/AppContext';
 import './VideoPlayer.css';
@@ -37,11 +37,7 @@ export default function VideoPlayer({
   startTime = 0, 
   defaultServer = -1, 
   onDirectUrlChange,
-  details,
-  partyChannel,
-  isHost,
-  controlMode,
-  onNextEpisode
+  details 
 }) {
   const { activeProfile, user, addToContinueWatching } = useApp();
   const [sourceIndex, setSourceIndex] = useState(defaultServer === -1 ? 1 : defaultServer);
@@ -78,9 +74,6 @@ export default function VideoPlayer({
   const lastSavedPercentRef = useRef(0);
   const lastTapRef = useRef({ time: 0, x: 0, y: 0 });
   const swipeStartRef = useRef(null);
-  
-  // Watch Party Sync flag
-  const isSyncingRef = useRef(false);
 
   // Trigger brief visual indicator overlay (HUD)
   const triggerHud = (message) => {
@@ -91,41 +84,17 @@ export default function VideoPlayer({
     }, 800);
   };
 
-  const broadcastSync = (action, forceTime = null) => {
-    if (!partyChannel || !videoRef.current || isSyncingRef.current) return;
-    if (!isHost && controlMode === 'host-only') return; // Only host broadcasts if host-only
-
-    partyChannel.send({
-      type: 'broadcast',
-      event: 'playback-sync',
-      payload: {
-        action,
-        time: forceTime !== null ? forceTime : videoRef.current.currentTime,
-        speed: videoRef.current.playbackRate
-      }
-    });
-  };
-
   const togglePlay = () => {
     const video = videoRef.current;
     if (!video) return;
-    
-    // Check if guest trying to control in host-only mode
-    if (partyChannel && !isHost && controlMode === 'host-only') {
-      triggerHud('Host Control Only');
-      return;
-    }
-
     if (video.paused) {
       video.play().catch(() => {});
       setIsPlaying(true);
       triggerHud('Play');
-      broadcastSync('play');
     } else {
       video.pause();
       setIsPlaying(false);
       triggerHud('Pause');
-      broadcastSync('pause');
     }
   };
 
@@ -141,16 +110,9 @@ export default function VideoPlayer({
   const handleSeek = (e) => {
     const video = videoRef.current;
     if (!video) return;
-    
-    if (partyChannel && !isHost && controlMode === 'host-only') {
-      triggerHud('Host Control Only');
-      return;
-    }
-
     const newTime = parseFloat(e.target.value);
     video.currentTime = newTime;
     setCurrentTime(newTime);
-    broadcastSync(isPlaying ? 'play' : 'pause', newTime);
   };
 
   const handleVolumeChange = (e) => {
@@ -169,17 +131,10 @@ export default function VideoPlayer({
   const handlePlaybackSpeed = (rate) => {
     const video = videoRef.current;
     if (!video) return;
-
-    if (partyChannel && !isHost && controlMode === 'host-only') {
-      triggerHud('Host Control Only');
-      return;
-    }
-
     video.playbackRate = rate;
     setPlaybackRate(rate);
     setIsSpeedMenuOpen(false);
     triggerHud(`Speed: ${rate}x`);
-    broadcastSync(isPlaying ? 'play' : 'pause');
   };
 
   const toggleFullscreen = () => {
@@ -200,28 +155,6 @@ export default function VideoPlayer({
       }
       setIsFullscreen(false);
       triggerHud('Exit Fullscreen');
-    }
-  };
-
-  const handlePiP = async () => {
-    try {
-      if (document.pictureInPictureElement) {
-        await document.exitPictureInPicture();
-        triggerHud('Exit PiP');
-      } else if (videoRef.current) {
-        await videoRef.current.requestPictureInPicture();
-        triggerHud('PiP Mode');
-      }
-    } catch (err) {
-      console.warn('PiP failed', err);
-      triggerHud('PiP not supported');
-    }
-  };
-
-  const handleSkipIntro = () => {
-    if (videoRef.current) {
-      videoRef.current.currentTime += 85; // Standard 85s skip
-      triggerHud('Skipped Intro');
     }
   };
 
@@ -567,64 +500,12 @@ export default function VideoPlayer({
     }
   }, [directUrl, onDirectUrlChange]);
 
-  // --- Realtime Sync Listener ---
-  useEffect(() => {
-    if (!partyChannel || !videoRef.current || !SOURCES[sourceIndex]?.isDirect) return;
-
-    const syncHandler = ({ payload }) => {
-      const video = videoRef.current;
-      if (!video) return;
-
-      // Ignore if we are host and in host-only mode
-      if (isHost && controlMode === 'host-only') return;
-
-      isSyncingRef.current = true;
-      
-      const { action, time, speed } = payload;
-      
-      if (Math.abs(video.currentTime - time) > 1.5) {
-        video.currentTime = time;
-        setCurrentTime(time);
-      }
-
-      if (speed && video.playbackRate !== speed) {
-        video.playbackRate = speed;
-        setPlaybackRate(speed);
-      }
-
-      if (action === 'play' && video.paused) {
-        video.play().catch(() => {});
-        setIsPlaying(true);
-        triggerHud('Sync: Play');
-      } else if (action === 'pause' && !video.paused) {
-        video.pause();
-        setIsPlaying(false);
-        triggerHud('Sync: Pause');
-      }
-
-      setTimeout(() => {
-        isSyncingRef.current = false;
-      }, 500);
-    };
-
-    partyChannel.on('broadcast', { event: 'playback-sync' }, syncHandler);
-
-    return () => {
-      // Supabase v2 doesn't have a clean way to remove a single broadcast listener by function,
-      // but it's safe since the channel itself is managed and destroyed by Watch.jsx on unmount.
-    };
-  }, [partyChannel, isHost, controlMode, sourceIndex]);
-
   useEffect(() => {
     return () => {
       clearTimeout(controlsTimeoutRef.current);
       clearTimeout(hudTimeoutRef.current);
     };
   }, []);
-
-  const showSkipIntro = currentSource.isDirect && currentTime > 5 && currentTime < 120;
-  const showUpNext = currentSource.isDirect && type === 'series' && duration > 0 && (duration - currentTime) < 60;
-  const showXRay = currentSource.isDirect && !isPlaying && details?.credits?.cast?.length > 0;
 
   return (
     <div 
@@ -686,25 +567,6 @@ export default function VideoPlayer({
                     </button>
                   </div>
                 )}
-                
-                {/* ── Binge Mode Overlays ── */}
-                {showSkipIntro && (
-                  <button className="skip-intro-btn glass animate-fade-in" onClick={handleSkipIntro}>
-                    <SkipForward size={16} /> Skip Intro
-                  </button>
-                )}
-
-                {showUpNext && (
-                  <div className="up-next-overlay glass animate-fade-in">
-                    <img src={details?.backdrop ? `https://image.tmdb.org/t/p/w300${details.backdrop}` : ''} alt="Up Next" className="up-next-img" />
-                    <div className="up-next-details">
-                      <h4>Up Next</h4>
-                      <p>Playing in {Math.floor(duration - currentTime)}s</p>
-                      <button className="btn btn-primary" onClick={onNextEpisode}>Play Next Episode</button>
-                    </div>
-                  </div>
-                )}
-                
                 <video
                   ref={videoRef}
                   key={directUrl}
@@ -876,10 +738,6 @@ export default function VideoPlayer({
                         <Tv size={20} />
                       </button>
 
-                      <button type="button" onClick={handlePiP} className="control-btn" title="Picture in Picture">
-                        <PictureInPicture size={20} />
-                      </button>
-
                       <div className="control-btn cast-wrapper" title="Google Cast">
                         <google-cast-launcher style={{ width: '20px', height: '20px', display: 'block', cursor: 'pointer', filter: 'invert(1)' }}></google-cast-launcher>
                       </div>
@@ -934,30 +792,6 @@ export default function VideoPlayer({
           >
             {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
           </button>
-        )}
-
-        {/* ── X-Ray Cast Overlay ── */}
-        {showXRay && (
-          <div className="xray-cast-overlay animate-fade-in">
-            <h4 className="xray-title">In Scene</h4>
-            <div className="xray-cast-list">
-              {details.credits.cast.slice(0, 6).map((actor) => (
-                <div key={actor.id} className="xray-actor-card glass">
-                  <div className="xray-actor-img-wrap">
-                    {actor.profile_path ? (
-                      <img src={`https://image.tmdb.org/t/p/w185${actor.profile_path}`} alt={actor.name} />
-                    ) : (
-                      <div className="xray-actor-img-fallback">{actor.name.charAt(0)}</div>
-                    )}
-                  </div>
-                  <div className="xray-actor-details">
-                    <span className="xray-actor-name">{actor.name}</span>
-                    <span className="xray-actor-char">{actor.character}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
         )}
       </div>
     </div>
